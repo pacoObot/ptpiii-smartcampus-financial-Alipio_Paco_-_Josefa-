@@ -1,0 +1,32 @@
+{
+  "name": "smart-campus-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plataforma Integrada Smart Campus - UJAC PTP III (Semana 3)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=@smart-campus/api",
+    "dev:web": "npm run dev --workspace=@smart-campus/web",
+    "build:packages": "npm run build --workspaces --if-present",
+    "db:generate": "npm run db:generate --workspace=@smart-campus/api",
+    "db:migrate:dev": "npm run db:migrate:dev --workspace=@smart-campus/api",
+    "db:seed": "npm run db:seed --workspace=@smart-campus/api",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "keywords": [
+    "smart-campus",
+    "monorepo",
+    "ptp3",
+    "ujac",
+    "express",
+    "react",
+    "prisma",
+    "postgresql"
+  ],
+  "author": "Alípio Paco & Jocar Elias",
+  "license": "ISC"
+}

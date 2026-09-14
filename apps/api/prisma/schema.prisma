@@ -1,0 +1,318 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  TECHNICIAN
+  COORDINATOR
+  ADMIN
+  FINANCE
+}
+
+enum RoomType {
+  CLASSROOM
+  LAB
+  AUDITORIUM
+  OFFICE
+  OTHER
+}
+
+enum IncidentStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum IncidentPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MaintenanceCategory {
+  ELECTRICAL
+  PLUMBING
+  HARDWARE
+  FURNITURE
+  HVAC
+  CLEANING
+  OTHER
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  CANCELLED
+}
+
+model User {
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(STUDENT)
+  studentId    String?
+  department   String?
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  reportedIncidents Incident[]   @relation("ReportedIncidents")
+  assignedIncidents Incident[]   @relation("AssignedIncidents")
+  
+  reportedMaintenance MaintenanceRequest[] @relation("ReportedMaintenance")
+  assignedMaintenance MaintenanceRequest[] @relation("AssignedMaintenance")
+  maintenanceNotes    MaintenanceNote[]
+  auditEvents         AuditEvent[]
+
+  @@map("users")
+}
+
+model Building {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  address   String
+  floors    Int      @default(1)
+  createdAt DateTime @default(now())
+
+  rooms     Room[]
+
+  @@map("buildings")
+}
+
+model Room {
+  id          String     @id @default(uuid())
+  code        String     @unique
+  name        String
+  buildingId  String
+  building    Building   @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  floor       Int        @default(0)
+  capacity    Int
+  isAvailable Boolean    @default(true)
+  type        RoomType   @default(CLASSROOM)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  incidents           Incident[]
+  maintenanceRequests MaintenanceRequest[]
+
+  @@map("rooms")
+}
+
+model Incident {
+  id           String           @id @default(uuid())
+  title        String
+  description  String
+  roomId       String
+  room         Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  reportedById String
+  reportedBy   User             @relation("ReportedIncidents", fields: [reportedById], references: [id])
+  assignedToId String?
+  assignedTo   User?            @relation("AssignedIncidents", fields: [assignedToId], references: [id])
+  status       IncidentStatus   @default(OPEN)
+  priority     IncidentPriority @default(MEDIUM)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@map("incidents")
+}
+
+model MaintenanceRequest {
+  id            String              @id @default(uuid())
+  code          String              @unique
+  title         String
+  description   String
+  category      MaintenanceCategory @default(OTHER)
+  priority      MaintenancePriority @default(MEDIUM)
+  status        MaintenanceStatus   @default(OPEN)
+  roomId        String
+  room          Room                @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  reportedById  String
+  reportedBy    User                @relation("ReportedMaintenance", fields: [reportedById], references: [id])
+  assignedToId  String?
+  assignedTo    User?               @relation("AssignedMaintenance", fields: [assignedToId], references: [id])
+  estimatedCost Float?
+  resolvedAt    DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  notes         MaintenanceNote[]
+
+  @@map("maintenance_requests")
+}
+
+model MaintenanceNote {
+  id        String             @id @default(uuid())
+  requestId String
+  request   MaintenanceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User               @relation(fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime           @default(now())
+
+  @@map("maintenance_notes")
+}
+
+model AuditEvent {
+  id            String   @id @default(uuid())
+  correlationId String
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  action        String
+  module        String
+  resourceId    String
+  payload       Json
+  createdAt     DateTime @default(now())
+
+  @@map("audit_events")
+}
+
+// =============================================================================
+// MODULO: Gestao Financeira de Estudantes (financial)
+// Grupo: Alipio Anderson Moises Paco (2024080003) & Jocar Celio Elias (2024080038)
+// Semana 5 - PTP III / UJAC
+// =============================================================================
+
+enum DebtStatus {
+  PENDENTE
+  VENCIDA
+  REGULARIZADA
+  CANCELADA
+}
+
+enum FinancialStatusType {
+  ACTIVE
+  BLOCKED
+}
+
+enum AnalysisRequestStatus {
+  PENDENTE_ANALISE
+  PROCEDENTE
+  IMPROCEDENTE
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CASH_DEPOSIT
+  MOBILE_MONEY
+  POS
+}
+
+// Divida: propina, multa ou taxa emitida para um estudante
+model Debt {
+  id               String            @id @default(cuid())
+  code             String            @unique
+  studentId        String
+  title            String
+  description      String?
+  amount           Decimal           @db.Decimal(10, 2)
+  origin           String
+  dueDate          DateTime
+  status           DebtStatus        @default(PENDENTE)
+  payments         Payment[]
+  analysisRequests AnalysisRequest[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([studentId, status])
+  @@index([dueDate])
+  @@map("debts")
+}
+
+// Pagamento: confirmacao de liquidacao de uma divida
+model Payment {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  debtId        String
+  studentId     String
+  amountPaid    Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  referenceCode String
+  confirmedById String
+  paidAt        DateTime      @default(now())
+  debt          Debt          @relation(fields: [debtId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@index([studentId])
+  @@index([debtId])
+  @@index([referenceCode])
+  @@map("payments")
+}
+
+// Estado financeiro: registo unico por estudante (ACTIVE ou BLOCKED)
+model FinancialStatus {
+  id        String              @id @default(cuid())
+  studentId String              @unique
+  status    FinancialStatusType @default(ACTIVE)
+  blockedAt DateTime?
+  reason    String?
+  updatedAt DateTime            @updatedAt
+
+  @@index([studentId, status])
+  @@map("financial_status")
+}
+
+// Pedido de analise: contestacao formal de uma divida pelo estudante
+model AnalysisRequest {
+  id              String                @id @default(cuid())
+  code            String                @unique
+  debtId          String
+  studentId       String
+  reason          String
+  status          AnalysisRequestStatus @default(PENDENTE_ANALISE)
+  slaDueDate      DateTime
+  resolvedById    String?
+  resolvedAt      DateTime?
+  resolutionNotes String?
+  debt            Debt                  @relation(fields: [debtId], references: [id])
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([studentId, status])
+  @@index([debtId])
+  @@map("analysis_requests")
+}
+
+// Notificacao financeira: alerta interno emitido automaticamente para o estudante
+model FinancialNotification {
+  id        String   @id @default(cuid())
+  studentId String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([studentId, read])
+  @@map("financial_notifications")
+}
+
+// Politica financeira: configuracao global de regras de bloqueio e tolerancia
+model FinancialPolicy {
+  id               String   @id @default(cuid())
+  code             String   @unique @default("DEFAULT_POLICY")
+  gracePeriodDays  Int      @default(5)
+  autoBlockEnabled Boolean  @default(true)
+  maxDebtAmount    Decimal  @default(0.00) @db.Decimal(10, 2)
+  updatedAt        DateTime @updatedAt
+
+  @@map("financial_policies")
+}

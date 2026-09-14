@@ -1,0 +1,16 @@
+{
+  "preset": "ts-jest",
+  "testEnvironment": "node",
+  "roots": ["<rootDir>/src"],
+  "testMatch": ["**/*.test.ts"],
+  "moduleNameMapper": {
+    "@smart-campus/shared-types": "<rootDir>/../../packages/shared-types/src/index.ts",
+    "@smart-campus/validation": "<rootDir>/../../packages/validation/src/index.ts"
+  },
+  "transform": {
+    "^.+\\.ts$": ["ts-jest", {
+      "tsconfig": "<rootDir>/tsconfig.json"
+    }]
+  },
+  "testTimeout": 15000
+}
