@@ -4,7 +4,7 @@
 // depender directamente do Prisma — apenas de contratos/funcoes desta camada.
 // Isso facilita testes unitarios (mock do repositorio) e migracao de ORM.
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, DebtStatus } from '@prisma/client';
 
 // Instancia unica do Prisma partilhada pelo modulo
 const prisma = new PrismaClient();
@@ -35,7 +35,7 @@ export async function insertDebt(data: {
   amount: number;
   origin: string;
   dueDate: Date;
-  status: string;
+  status?: DebtStatus;
 }) {
   return prisma.debt.create({ data });
 }
