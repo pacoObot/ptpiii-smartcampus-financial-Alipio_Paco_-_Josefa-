@@ -40,7 +40,7 @@ export function App() {
       <main>
         <section className="glass-card" style={{ marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#f8fafc' }}>
-            Modulo do Grupo: Alipio Paco e Jocar Elias
+            Modulo do Grupo: Alipio Paco e Jesefa Mutemba
           </h2>
           <p style={{ color: '#94a3b8', lineHeight: '1.6', fontSize: '0.95rem' }}>
             Bem-vindo ao directorio <strong style={{ color: '#60a5fa' }}>SMART CAMPUS</strong>. Este ambiente foi preparado de acordo com as especificacoes da Semana 3 da PTP III (Monolito Modular, Express, Prisma, PostgreSQL, Zod e React).

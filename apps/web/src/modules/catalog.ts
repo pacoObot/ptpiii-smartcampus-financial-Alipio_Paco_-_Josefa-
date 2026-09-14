@@ -36,7 +36,7 @@ export const campusModules: CampusModuleInfo[] = [
     status: 'available',
     category: 'particular',
     route: '/api/v1/maintenance',
-    teamMembers: ['Alipio Paco (2024080003)', 'Jocar Elias (2024080038)'],
+    teamMembers: ['Alipio Paco (2024080003)', 'Jesefa Mutemba'],
   },
   {
     id: 'audit-events',

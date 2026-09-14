@@ -130,7 +130,7 @@ export class SmartCampusApiClient {
 
   // ===========================================================================
   // MODULO: Gestao Financeira de Estudantes
-  // Grupo: Alipio Anderson Moises Paco (2024080003) & Jocar Celio Elias (2024080038)
+  // Grupo: Alipio Anderson Moises Paco (2024080003) & Jesefa Mutemba
   // Base URL: /financial
   // ===========================================================================
 

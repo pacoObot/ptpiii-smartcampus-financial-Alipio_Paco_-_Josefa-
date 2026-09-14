@@ -1,7 +1,7 @@
 # Documentação Técnica e Guia de Apresentação — Semana 5
 ## Módulo: Gestão Financeira de Estudantes (`financial`)
 **PTP III — Universidade Joaquim Chissano (UJAC)**  
-**Autores (Grupo):** Alípio Anderson Moisés Paço (2024080003) & Jocar Célio Elias (2024080038)  
+**Autores (Grupo):** Alípio Anderson Moisés Paço (2024080003) & Jesefa Mutemba  
 
 ---
 
@@ -24,20 +24,20 @@ O módulo **Gestão Financeira de Estudantes** foi desenvolvido segundo a arquit
 ```
 apps/api/src/modules/financial/
 ├── domain/
-│   └── financial.domain.ts         ← Tipos puros, enums, funções de mapeamento (Prisma → DTO)
+│   └── financial.domain.ts         -- Tipos puros, enums, funções de mapeamento (Prisma -> DTO)
 ├── infrastructure/
-│   └── financialRepository.ts      ← [NOVO] Encapsula todas as queries Prisma (Repository Pattern)
+│   └── financialRepository.ts      -- Encapsula todas as queries Prisma (Repository Pattern)
 ├── schemas/
-│   └── index.ts                    ← [NOVO] Re-exporta schemas Zod do @smart-campus/validation
+│   └── index.ts                    -- Re-exporta schemas Zod do @smart-campus/validation
 ├── application/
-│   └── financialService.ts         ← Casos de uso, regras de negócio, transacções ACID
+│   └── financialService.ts         -- Casos de uso, regras de negócio, transacções ACID
 ├── http/
-│   └── financialRouter.ts          ← Rotas Express, autenticação JWT, autorização RBAC
+│   └── financialRouter.ts          -- Rotas Express, autenticação JWT, autorização RBAC
 └── tests/
-    └── financial.test.ts           ← Suíte de 11 testes Jest + Supertest
+    └── financial.test.ts           -- Suíte de 11 testes Jest + Supertest
 ```
 
-### Porquê cada camada?
+### Divisão de Responsabilidades por Camada
 
 | Camada | Responsabilidade | Dependências |
 | :--- | :--- | :--- |
@@ -52,24 +52,24 @@ apps/api/src/modules/financial/
 
 ## 3. Conformidade com a Ficha de Preparação — Semana 5
 
-### Matriz de Conformidade (100% Atingido)
+### Matriz de Conformidade
 
 | # | Requisito da Ficha | Ficheiro / Local no Projecto | Estado |
 | :- | :--- | :--- | :---: |
-| 1 | **Estrutura de pastas** com camadas `domain`, `application`, `http`, `tests`, `infrastructure`, `schemas` | `apps/api/src/modules/financial/` | ✅ 100% |
-| 2 | **Entidades & Modelos** no Prisma (`Debt`, `Payment`, `FinancialStatus`, `AnalysisRequest`, `FinancialNotification`, `FinancialPolicy`) | `apps/api/prisma/schema.prisma` | ✅ 100% |
-| 3 | **DTOs em pacote partilhado** (`DebtDto`, `PaymentDto`, `FinancialStatusSummaryDto`, etc.) | `packages/shared-types/src/index.ts` | ✅ 100% |
-| 4 | **Schemas Zod** de validação com mensagens em PT | `packages/validation/src/index.ts` | ✅ 100% |
-| 5 | **Métodos no Cliente HTTP SDK** para todo o módulo financeiro | `packages/api-client/src/index.ts` | ✅ 100% |
-| 6 | **Rota registada** no router principal da API | `apps/api/src/routes/v1.ts` | ✅ 100% |
-| 7 | **CRUD completo** com validação 400, regras de negócio (update/delete), transacção ACID | `application/financialService.ts` | ✅ 100% |
-| 8 | **Documentação OpenAPI/Swagger** acessível em `/api/docs` | `apps/api/src/config/swagger.ts` | ✅ 100% |
+| 1 | Estrutura de pastas com camadas `domain`, `application`, `http`, `tests`, `infrastructure`, `schemas` | `apps/api/src/modules/financial/` | 100% |
+| 2 | Entidades & Modelos no Prisma (`Debt`, `Payment`, `FinancialStatus`, `AnalysisRequest`, `FinancialNotification`, `FinancialPolicy`) | `apps/api/prisma/schema.prisma` | 100% |
+| 3 | DTOs em pacote partilhado (`DebtDto`, `PaymentDto`, `FinancialStatusSummaryDto`, etc.) | `packages/shared-types/src/index.ts` | 100% |
+| 4 | Schemas Zod de validação com mensagens em PT | `packages/validation/src/index.ts` | 100% |
+| 5 | Métodos no Cliente HTTP SDK para todo o módulo financeiro | `packages/api-client/src/index.ts` | 100% |
+| 6 | Rota registada no router principal da API | `apps/api/src/routes/v1.ts` | 100% |
+| 7 | CRUD completo com validação 400, regras de negócio (update/delete), transacção ACID | `application/financialService.ts` | 100% |
+| 8 | Documentação OpenAPI/Swagger acessível em `/api/docs` | `apps/api/src/config/swagger.ts` | 100% |
 
 ---
 
 ## 4. Respostas às Perguntas da Ficha de Preparação
 
-### ❓ Pergunta 1: O que é uma API RESTful e quais são os seus princípios fundamentais?
+### Pergunta 1: O que é uma API RESTful e quais são os seus princípios fundamentais?
 
 **Resposta:**
 
@@ -91,24 +91,22 @@ Os **6 princípios fundamentais** são:
 
 ---
 
-### ❓ Pergunta 2: Qual é a diferença entre os métodos HTTP GET, POST, PUT e PATCH?
+### Pergunta 2: Qual é a diferença entre os métodos HTTP GET, POST, PUT e PATCH?
 
 **Resposta:**
 
 | Método | Idempotente? | Semântica | Uso no nosso módulo |
 | :--- | :---: | :--- | :--- |
-| `GET` | ✅ Sim | Ler/listar recursos sem alterar estado | `GET /debts`, `GET /students/:id/status` |
-| `POST` | ❌ Não | Criar um novo recurso (gera novo ID) | `POST /debts`, `POST /payments`, `POST /analysis-requests` |
-| `PUT` | ✅ Sim | Substituir um recurso completo | Não usado — prefere-se `PATCH` para actualizações parciais |
-| `PATCH` | ❌ Não* | Actualizar parcialmente um recurso | `PATCH /analysis-requests/:id`, `PATCH /policies/:id` |
-
-> *`PATCH` é conceptualmente não idempotente, embora na prática possa ser implementado como tal.
+| `GET` | Sim | Ler/listar recursos sem alterar estado | `GET /debts`, `GET /students/:id/status` |
+| `POST` | Não | Criar um novo recurso (gera novo ID) | `POST /debts`, `POST /payments`, `POST /analysis-requests` |
+| `PUT` | Sim | Substituir um recurso completo | Não usado — prefere-se `PATCH` para actualizações parciais |
+| `PATCH` | Não | Actualizar parcialmente um recurso | `PATCH /analysis-requests/:id`, `PATCH /policies/:id` |
 
 **Exemplo prático:** Ao resolver uma contestação, usamos `PATCH` porque só alteramos o campo `status` e `resolutionNotes`, sem substituir o registo inteiro.
 
 ---
 
-### ❓ Pergunta 3: O que são códigos de status HTTP e para que servem?
+### Pergunta 3: O que são códigos de status HTTP e para que servem?
 
 **Resposta:**
 
@@ -123,17 +121,17 @@ Os **códigos de status HTTP** são números de 3 dígitos que o servidor inclui
 | `5xx` — Erro do Servidor | Falha interna inesperada | `500 Internal Server Error` (excepção não tratada) |
 
 **No nosso módulo, os testes Jest validam exactamente estes cenários:**
-- `401` → requisição sem token JWT
-- `403` → `STUDENT` a tentar chamar `POST /debts`
-- `400` → payload sem campo obrigatório (Zod valida e rejeita)
-- `404` → consulta de dívida com ID inexistente
-- `409` → submeter segunda contestação para a mesma dívida
-- `201` → criação bem-sucedida de dívida ou pagamento
-- `200` → leitura de relatório ou estado financeiro
+- `401` -> requisição sem token JWT
+- `403` -> `STUDENT` a tentar chamar `POST /debts`
+- `400` -> payload sem campo obrigatório (Zod valida e rejeita)
+- `404` -> consulta de dívida com ID inexistente
+- `409` -> submeter segunda contestação para a mesma dívida
+- `201` -> criação bem-sucedida de dívida ou pagamento
+- `200` -> leitura de relatório ou estado financeiro
 
 ---
 
-### ❓ Pergunta 4: O que é persistência de dados e como o Prisma ORM nos ajuda?
+### Pergunta 4: O que é persistência de dados e como o Prisma ORM nos ajuda?
 
 **Resposta:**
 
@@ -145,10 +143,7 @@ Os **códigos de status HTTP** são números de 3 dígitos que o servidor inclui
 3. **Gera o cliente tipado** (`@prisma/client`) — funções TypeScript seguras para criar, ler, actualizar e apagar registos.
 4. **Garante Type Safety** — erros de tipagem são detectados em tempo de compilação, não em produção.
 
-**Exemplo do nosso módulo:**
-
 ```prisma
-// schema.prisma — declaração da entidade Debt
 model Debt {
   id        String   @id @default(cuid())
   code      String   @unique
@@ -163,18 +158,13 @@ model Debt {
 }
 ```
 
-```typescript
-// financialService.ts — uso do cliente Prisma
-const debt = await prisma.debt.create({ data: { code, studentId, ... } });
-```
-
 ---
 
-### ❓ Pergunta 5: O que são transacções ACID e por que são importantes?
+### Pergunta 5: O que são transacções ACID e por que são importantes?
 
 **Resposta:**
 
-Uma **transacção ACID** é um conjunto de operações na base de dados que se comporta como uma unidade atómica. O acrónimo significa:
+Uma **transacção ACID** é um conjunto de operações na base de dados que se comporta como uma unidade atómica:
 
 | Propriedade | Significado | Aplicação no nosso módulo |
 | :--- | :--- | :--- |
@@ -186,40 +176,25 @@ Uma **transacção ACID** é um conjunto de operações na base de dados que se 
 **Implementação no `financialService.ts` com `prisma.$transaction`:**
 
 ```typescript
-// createPayment() — 3 passos ACID
 const resultado = await prisma.$transaction(async (tx) => {
-  // Passo 1: Criar o Payment
   const payment = await tx.payment.create({ data: { ... } });
-
-  // Passo 2: Actualizar a Debt para REGULARIZADA
   await tx.debt.update({ where: { id: input.debtId }, data: { status: 'REGULARIZADA' } });
-
-  // Passo 3: Recalcular estado financeiro do estudante
   const novoEstado = await recalcularEstado(tx, debt.studentId);
-
-  // Se qualquer passo falhar → todos os passos são revertidos (Atomicidade)
   return { payment, novoEstado };
 });
 ```
 
 ---
 
-### ❓ Pergunta 6: O que é validação de dados e por que é essencial?
+### Pergunta 6: O que é validação de dados e por que é essencial?
 
 **Resposta:**
 
 **Validação de dados** é o processo de verificar se os dados recebidos numa requisição respeitam as regras esperadas antes de os processar ou gravar na base de dados.
 
-**Por que é essencial?**
-- Previne dados corrompidos na BD (ex: dívida com valor negativo)
-- Protege contra ataques de injecção
-- Fornece mensagens de erro claras ao utilizador
-- Reduz erros em produção
-
-**No nosso módulo usamos Zod** — uma biblioteca de validação TypeScript-first:
+**No nosso módulo usamos Zod:**
 
 ```typescript
-// packages/validation/src/index.ts
 export const createDebtSchema = z.object({
   studentId: z.string().min(1, 'O ID do estudante é obrigatório'),
   title:     z.string().trim().min(3, 'Título deve ter pelo menos 3 caracteres'),
@@ -227,22 +202,6 @@ export const createDebtSchema = z.object({
   origin:    z.string().trim().min(2, 'Origem é obrigatória'),
   dueDate:   z.string().datetime({ message: 'Data de vencimento inválida (ISO 8601)' }),
 });
-
-// financialRouter.ts — validação antes de chamar o service
-const input = createDebtSchema.parse(req.body);
-// → Se falhar: ZodError → errorHandler → resposta 400 estruturada
-```
-
-**Resposta 400 gerada automaticamente pelo errorHandler:**
-```json
-{
-  "code": "VALIDATION_ERROR",
-  "message": "Dados de entrada inválidos",
-  "details": [
-    { "path": "amount", "message": "O valor deve ser superior a zero" }
-  ],
-  "correlationId": "uuid-aqui"
-}
 ```
 
 ---
@@ -319,7 +278,6 @@ Os seguintes métodos foram adicionados à classe `SmartCampusApiClient`:
    ```bash
    npm test -- modules/financial
    ```
-   *Demonstra os 11 testes a passar com envelopes 400, 403, 404, 401, 409 e 200.*
 
 2. **Interface Swagger UI:**
    - Iniciar a API: `npm run dev:api`
@@ -330,7 +288,6 @@ Os seguintes métodos foram adicionados à classe `SmartCampusApiClient`:
    ```bash
    npx prisma studio --schema=apps/api/prisma/schema.prisma
    ```
-   *Visualizar as tabelas `Debt`, `Payment`, `FinancialStatus` com dados reais.*
 
 ---
 
@@ -367,7 +324,7 @@ erDiagram
    - **Read/Update:** `PATCH /analysis-requests/:id` — Resolução pelo operador (`PROCEDENTE` ou `IMPROCEDENTE`) com notas explicativas e cálculo de SLA.
 
 4. **`FinancialStatus` (Estado Financeiro):**
-   - **Read:** `GET /students/:id/status` — Consulta rápida se o estudante está `ACTIVE` ou `BLOCKED` (usado por outros módulos para autorizar inscrições ou acesso ao campus).
+   - **Read:** `GET /students/:id/status` — Consulta rápida se o estudante está `ACTIVE` ou `BLOCKED`.
 
 ---
 
@@ -399,16 +356,6 @@ A validação de dados é **estrita e contínua** na camada HTTP antes de atingi
 
 - **Execução:** Todas as rotas `POST`, `PUT` e `PATCH` passam o `req.body` pelo schema Zod (`schema.parse(req.body)`).
 - **Tratamento de Erros:** Se o payload falhar na validação, o Zod lança um `ZodError`, que é capturado pelo `errorHandlerMiddleware` centralizado, convertendo-o num **HTTP 400 Bad Request**.
-
-**Exemplo de Schemas Zod (`packages/validation`):**
-```typescript
-export const createPaymentSchema = z.object({
-  debtId: z.string().min(1, 'ID da dívida é obrigatório'),
-  amountPaid: z.number().positive('O valor deve ser superior a zero'),
-  paymentMethod: z.enum(['BANK_TRANSFER', 'CASH_DEPOSIT', 'MOBILE_MONEY', 'POS']),
-  referenceCode: z.string().trim().min(4, 'Código de referência inválido').max(80),
-});
-```
 
 ---
 
@@ -452,4 +399,3 @@ A manutenção de um histórico imutável é uma das principais boas práticas d
 - O histórico completo do estudante é disponibilizado em `GET /api/v1/financial/students/:studentId/history`.
 - Esse endpoint consolida todas as dívidas históricas, todos os pagamentos efetuados, total pago e o saldo pendente atual.
 - Garante total transparência em auditorias internas, contestações legais e verificação de propinas para graduação.
-

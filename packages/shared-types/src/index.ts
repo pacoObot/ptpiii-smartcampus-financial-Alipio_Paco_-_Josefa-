@@ -183,7 +183,7 @@ export interface CampusModuleInfo {
 
 // =============================================================================
 // MODULO: Gestao Financeira de Estudantes (financial)
-// Grupo: Alipio Anderson Moises Paco (2024080003) & Jocar Celio Elias (2024080038)
+// Grupo: Alipio Anderson Moises Paco (2024080003) & Jesefa Mutemba
 // =============================================================================
 
 export type DebtStatus = 'PENDENTE' | 'VENCIDA' | 'REGULARIZADA' | 'CANCELADA';

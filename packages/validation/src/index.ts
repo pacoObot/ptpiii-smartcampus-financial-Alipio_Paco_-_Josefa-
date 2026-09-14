@@ -102,7 +102,7 @@ export type FilterMaintenanceQueryInput = z.infer<typeof filterMaintenanceQueryS
 
 // =============================================================================
 // MODULO: Gestao Financeira de Estudantes (financial)
-// Grupo: Alipio Anderson Moises Paco (2024080003) & Jocar Celio Elias (2024080038)
+// Grupo: Alipio Anderson Moises Paco (2024080003) & Jesefa Mutemba
 // =============================================================================
 
 // Valor monetario: positivo e com no maximo 2 casas decimais
