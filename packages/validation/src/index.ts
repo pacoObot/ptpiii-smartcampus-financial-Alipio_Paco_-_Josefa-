@@ -17,7 +17,7 @@ export const createUserSchema = z.object({
   name: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres').max(120),
   email: z.string().email('E-mail institucional invalido'),
   password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
-  role: z.enum(['STUDENT', 'TEACHER', 'TECHNICIAN', 'COORDINATOR', 'ADMIN']).default('STUDENT'),
+  role: z.enum(['STUDENT', 'TEACHER', 'TECHNICIAN', 'COORDINATOR', 'ADMIN', 'FINANCE']).default('STUDENT'),
   studentId: z.string().trim().optional(),
   department: z.string().trim().optional(),
 });
@@ -157,4 +157,3 @@ export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
 export type CreateAnalysisRequestInput = z.infer<typeof createAnalysisRequestSchema>;
 export type ResolveAnalysisRequestInput = z.infer<typeof resolveAnalysisRequestSchema>;
 export type UpdateFinancialPolicyInput = z.infer<typeof updateFinancialPolicySchema>;
-

@@ -1,10 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import '../config/env';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 A semear dados de teste para o Módulo de Gestão Financeira...');
+  console.log(' A semear dados de teste para o Módulo de Gestão Financeira...');
 
   // 1. Password padrão para os utilizadores de teste: "123456"
   const passwordHash = await bcrypt.hash('123456', 10);
@@ -77,7 +78,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Utilizadores RBAC criados: ADMIN, FINANCE, STUDENT (Alípio & Josefa), TEACHER');
+  console.log(' Utilizadores RBAC criados: ADMIN, FINANCE, STUDENT (Alípio & Josefa), TEACHER');
 
   // 3. Criar ou Atualizar Política Financeira Padrão
   const policy = await prisma.financialPolicy.upsert({
@@ -90,7 +91,7 @@ async function main() {
       maxDebtAmount: 0,
     },
   });
-  console.log('✅ Política financeira padrão criada:', policy.code);
+  console.log(' Política financeira padrão criada:', policy.code);
 
   // 4. Limpar dados financeiros prévios para manter seed limpo e reprodutível
   await prisma.payment.deleteMany({});
@@ -160,7 +161,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Dívidas de teste criadas (PENDENTE, VENCIDA, REGULARIZADA)');
+  console.log(' Dividas de teste criadas (PENDENTE, VENCIDA, REGULARIZADA)');
 
   // 6. Criar Pagamento de Teste (Pagamento da Propina de Agosto da Josefa)
   const payment1 = await prisma.payment.create({
@@ -176,7 +177,7 @@ async function main() {
       paidAt: new Date('2026-08-25T10:30:00Z'),
     },
   });
-  console.log('✅ Pagamento de teste criado:', payment1.code);
+  console.log(' Pagamento de teste criado:', payment1.code);
 
   // 7. Configurar Estados Financeiros dos Estudantes
   // Alípio está BLOCKED por causa da dívida VENCIDA (debt_02)
@@ -196,7 +197,7 @@ async function main() {
       status: 'ACTIVE',
     },
   });
-  console.log('✅ Estados financeiros configurados: Alípio (BLOCKED), Josefa (ACTIVE)');
+  console.log(' Estados financeiros configurados: Alípio (BLOCKED), Josefa (ACTIVE)');
 
   // 8. Criar Pedido de Análise / Contestação de Teste
   const analysisReq = await prisma.analysisRequest.create({
@@ -210,7 +211,7 @@ async function main() {
       slaDueDate: new Date('2026-09-20T23:59:59Z'),
     },
   });
-  console.log('✅ Contestação de teste criada:', analysisReq.code);
+  console.log(' Contestacao de teste criada:', analysisReq.code);
 
   // 9. Notificação de Teste
   await prisma.financialNotification.create({
@@ -221,14 +222,14 @@ async function main() {
       read: false,
     },
   });
-  console.log('✅ Notificação de teste emitida');
+  console.log(' Notificacao de teste emitida');
 
-  console.log('\n🎉 SEED CONCLUÍDO COM SUCESSO!');
+  console.log('\nSEED CONCLUIDO COM SUCESSO!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erro durante o seed:', e);
+    console.error('Erro durante o seed:', e);
     process.exit(1);
   })
   .finally(async () => {

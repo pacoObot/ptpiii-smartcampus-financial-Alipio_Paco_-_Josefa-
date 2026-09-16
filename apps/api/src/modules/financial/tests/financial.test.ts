@@ -2,21 +2,178 @@
 // Exercicio 6 — Testes automatizados do modulo financeiro
 // Cobre: 404 (nao encontrado), 400 (validacao Zod), 403 (sem permissao)
 //
-// Para correr: npm test -- --testPathPattern=financial
+// Para correr a partir da raiz SMART CAMPUS: npm run test:financial
+// Para correr a partir de apps/api: npm run test:financial
 //
 // Nota: Os testes usam supertest para fazer pedidos HTTP reais a API Express.
-// Nao precisam de Docker a correr — a API usa mocks em memoria para os testes.
+// O modulo financeiro usa Prisma; para resultados reprodutiveis, resemeie a BD antes da suite completa.
 
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../../../app';
 import { env } from '../../../config/env';
+import { prisma } from '../infrastructure/financialRepository';
 
 // Tokens de teste assinados com a JWT_SECRET da API
-const ADMIN_TOKEN = `Bearer ${jwt.sign({ id: 'user-admin-1', email: 'admin@ujac.ac.mz', role: 'ADMIN' }, env.JWT_SECRET)}`;
-const STUDENT_TOKEN = `Bearer ${jwt.sign({ id: 'user-student-1', email: 'student@ujac.ac.mz', role: 'STUDENT' }, env.JWT_SECRET)}`;
+const ADMIN_TOKEN = `Bearer ${jwt.sign({ id: 'usr_admin_01', email: 'admin@ujac.ac.mz', role: 'ADMIN' }, env.JWT_SECRET)}`;
+const STUDENT_TOKEN = `Bearer ${jwt.sign({ id: 'usr_student_01', email: 'alipio.paco@estudante.ujac.ac.mz', role: 'STUDENT' }, env.JWT_SECRET)}`;
+const STUDENT_2_TOKEN = `Bearer ${jwt.sign({ id: 'usr_student_02', email: 'josefa.muthemba@estudante.ujac.ac.mz', role: 'STUDENT' }, env.JWT_SECRET)}`;
 
 describe('Modulo Financeiro — Exercicio 6: Erros e Consistencia', () => {
+  beforeAll(async () => {
+    // Garante fixtures estaveis mesmo depois de demonstracoes manuais no Swagger.
+    await prisma.debt.upsert({
+      where: { id: 'test_debt_overdue' },
+      update: {
+        code: 'TEST-DBT-OVERDUE',
+        studentId: 'usr_student_01',
+        title: 'Divida Vencida de Teste',
+        description: 'Fixture automatica para testes financeiros',
+        amount: 1500,
+        origin: 'TEST_SUITE',
+        dueDate: new Date('2026-08-15T23:59:59Z'),
+        status: 'VENCIDA',
+      },
+      create: {
+        id: 'test_debt_overdue',
+        code: 'TEST-DBT-OVERDUE',
+        studentId: 'usr_student_01',
+        title: 'Divida Vencida de Teste',
+        description: 'Fixture automatica para testes financeiros',
+        amount: 1500,
+        origin: 'TEST_SUITE',
+        dueDate: new Date('2026-08-15T23:59:59Z'),
+        status: 'VENCIDA',
+      },
+    });
+
+    await prisma.debt.upsert({
+      where: { id: 'test_debt_regularized' },
+      update: {
+        code: 'TEST-DBT-REGULARIZED',
+        studentId: 'usr_student_02',
+        title: 'Divida Regularizada de Teste',
+        description: 'Fixture automatica para testes financeiros',
+        amount: 0,
+        origin: 'TEST_SUITE',
+        dueDate: new Date('2026-08-31T23:59:59Z'),
+        status: 'REGULARIZADA',
+      },
+      create: {
+        id: 'test_debt_regularized',
+        code: 'TEST-DBT-REGULARIZED',
+        studentId: 'usr_student_02',
+        title: 'Divida Regularizada de Teste',
+        description: 'Fixture automatica para testes financeiros',
+        amount: 0,
+        origin: 'TEST_SUITE',
+        dueDate: new Date('2026-08-31T23:59:59Z'),
+        status: 'REGULARIZADA',
+      },
+    });
+
+    await prisma.debt.upsert({
+      where: { id: 'test_debt_other_student' },
+      update: {
+        code: 'TEST-DBT-OTHER-STUDENT',
+        studentId: 'usr_student_02',
+        title: 'Divida de Outro Estudante',
+        description: 'Fixture automatica para testes de RBAC',
+        amount: 500,
+        origin: 'TEST_SUITE',
+        dueDate: new Date('2026-10-15T23:59:59Z'),
+        status: 'PENDENTE',
+      },
+      create: {
+        id: 'test_debt_other_student',
+        code: 'TEST-DBT-OTHER-STUDENT',
+        studentId: 'usr_student_02',
+        title: 'Divida de Outro Estudante',
+        description: 'Fixture automatica para testes de RBAC',
+        amount: 500,
+        origin: 'TEST_SUITE',
+        dueDate: new Date('2026-10-15T23:59:59Z'),
+        status: 'PENDENTE',
+      },
+    });
+
+    await prisma.payment.upsert({
+      where: { id: 'test_pay_regularized' },
+      update: {
+        code: 'TEST-PAY-REGULARIZED',
+        debtId: 'test_debt_regularized',
+        studentId: 'usr_student_02',
+        amountPaid: 3500,
+        paymentMethod: 'BANK_TRANSFER',
+        referenceCode: 'TEST-REF-REGULARIZED',
+        confirmedById: 'usr_finance_01',
+        paidAt: new Date('2026-08-25T10:30:00Z'),
+      },
+      create: {
+        id: 'test_pay_regularized',
+        code: 'TEST-PAY-REGULARIZED',
+        debtId: 'test_debt_regularized',
+        studentId: 'usr_student_02',
+        amountPaid: 3500,
+        paymentMethod: 'BANK_TRANSFER',
+        referenceCode: 'TEST-REF-REGULARIZED',
+        confirmedById: 'usr_finance_01',
+        paidAt: new Date('2026-08-25T10:30:00Z'),
+      },
+    });
+
+    await prisma.financialStatus.upsert({
+      where: { studentId: 'usr_student_01' },
+      update: {
+        status: 'BLOCKED',
+        blockedAt: new Date('2026-08-20T00:00:00Z'),
+        reason: 'Bloqueio automatico por divida vencida de teste.',
+      },
+      create: {
+        studentId: 'usr_student_01',
+        status: 'BLOCKED',
+        blockedAt: new Date('2026-08-20T00:00:00Z'),
+        reason: 'Bloqueio automatico por divida vencida de teste.',
+      },
+    });
+
+    await prisma.financialStatus.upsert({
+      where: { studentId: 'usr_student_02' },
+      update: {
+        status: 'ACTIVE',
+        blockedAt: null,
+        reason: null,
+      },
+      create: {
+        studentId: 'usr_student_02',
+        status: 'ACTIVE',
+      },
+    });
+
+    await prisma.analysisRequest.upsert({
+      where: { id: 'test_ar_pending' },
+      update: {
+        code: 'TEST-AR-PENDING',
+        debtId: 'test_debt_overdue',
+        studentId: 'usr_student_01',
+        reason: 'Solicito nova analise desta divida de teste com pedido pendente.',
+        status: 'PENDENTE_ANALISE',
+        slaDueDate: new Date('2026-09-20T23:59:59Z'),
+        resolvedById: null,
+        resolvedAt: null,
+        resolutionNotes: null,
+      },
+      create: {
+        id: 'test_ar_pending',
+        code: 'TEST-AR-PENDING',
+        debtId: 'test_debt_overdue',
+        studentId: 'usr_student_01',
+        reason: 'Solicito nova analise desta divida de teste com pedido pendente.',
+        status: 'PENDENTE_ANALISE',
+        slaDueDate: new Date('2026-09-20T23:59:59Z'),
+      },
+    });
+  });
 
   // =========================================================================
   // CENARIO 1: 404 — Recurso nao encontrado
@@ -172,6 +329,24 @@ describe('Modulo Financeiro — Exercicio 6: Erros e Consistencia', () => {
       expect(response.status).toBe(403);
       expect(response.body.code).toBe('FORBIDDEN');
     });
+
+    it('GET /api/v1/financial/debts/:id por outro STUDENT deve retornar 403', async () => {
+      const response = await request(app)
+        .get('/api/v1/financial/debts/test_debt_other_student')
+        .set('Authorization', STUDENT_TOKEN);
+
+      expect(response.status).toBe(403);
+      expect(response.body.code).toBe('FORBIDDEN');
+    });
+
+    it('GET /api/v1/financial/debts com studentId de outro estudante deve retornar 403', async () => {
+      const response = await request(app)
+        .get('/api/v1/financial/debts?studentId=usr_student_02')
+        .set('Authorization', STUDENT_TOKEN);
+
+      expect(response.status).toBe(403);
+      expect(response.body.code).toBe('FORBIDDEN');
+    });
   });
 
   // =========================================================================
@@ -209,6 +384,92 @@ describe('Modulo Financeiro — Exercicio 6: Erros e Consistencia', () => {
         expect(response.body.meta).toHaveProperty('correlationId');
         expect(Array.isArray(response.body.data)).toBe(true);
       }
+    });
+
+    it('GET /api/v1/financial/students/:id/status deve calcular BLOCKED por divida vencida', async () => {
+      const response = await request(app)
+        .get('/api/v1/financial/students/usr_student_01/status')
+        .set('Authorization', STUDENT_TOKEN);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toMatchObject({
+        studentId: 'usr_student_01',
+        status: 'BLOCKED',
+      });
+      expect(response.body.data.overdueDebtsCount).toBeGreaterThan(0);
+    });
+
+    it('GET /api/v1/financial/students/:id/history deve incluir dividas, pagamentos e estado', async () => {
+      const response = await request(app)
+        .get('/api/v1/financial/students/usr_student_02/history')
+        .set('Authorization', STUDENT_2_TOKEN);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.data.debts)).toBe(true);
+      expect(Array.isArray(response.body.data.payments)).toBe(true);
+      expect(response.body.data.status).toHaveProperty('status');
+      expect(response.body.data.totalPaid).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  // =========================================================================
+  // CENARIO 6: Regras de negocio financeiras
+  // =========================================================================
+  describe('Regras de negocio financeiras', () => {
+    it('POST /api/v1/financial/payments com montante diferente da divida deve retornar 400', async () => {
+      const response = await request(app)
+        .post('/api/v1/financial/payments')
+        .set('Authorization', ADMIN_TOKEN)
+        .send({
+          debtId: 'test_debt_overdue',
+          amountPaid: 1,
+          paymentMethod: 'BANK_TRANSFER',
+          referenceCode: 'REF-AMOUNT-MISMATCH',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.code).toBe('PAYMENT_AMOUNT_MISMATCH');
+    });
+
+    it('POST /api/v1/financial/payments para divida regularizada deve retornar 409', async () => {
+      const response = await request(app)
+        .post('/api/v1/financial/payments')
+        .set('Authorization', ADMIN_TOKEN)
+        .send({
+          debtId: 'test_debt_regularized',
+          amountPaid: 3500,
+          paymentMethod: 'BANK_TRANSFER',
+          referenceCode: 'REF-ALREADY-PAID',
+        });
+
+      expect(response.status).toBe(409);
+      expect(response.body.code).toBe('DEBT_ALREADY_REGULARIZED');
+    });
+
+    it('POST /api/v1/financial/analysis-requests para divida regularizada deve retornar 409', async () => {
+      const response = await request(app)
+        .post('/api/v1/financial/analysis-requests')
+        .set('Authorization', STUDENT_2_TOKEN)
+        .send({
+          debtId: 'test_debt_regularized',
+          reason: 'Solicito analise de uma divida que ja consta como regularizada.',
+        });
+
+      expect(response.status).toBe(409);
+      expect(response.body.code).toBe('DEBT_ALREADY_REGULARIZED');
+    });
+
+    it('POST /api/v1/financial/analysis-requests duplicada deve retornar 409', async () => {
+      const response = await request(app)
+        .post('/api/v1/financial/analysis-requests')
+        .set('Authorization', STUDENT_TOKEN)
+        .send({
+          debtId: 'test_debt_overdue',
+          reason: 'Solicito nova analise da mesma divida que ja possui pedido pendente.',
+        });
+
+      expect(response.status).toBe(409);
+      expect(response.body.code).toBe('ANALYSIS_REQUEST_ALREADY_OPEN');
     });
   });
 

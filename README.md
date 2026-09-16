@@ -1,10 +1,10 @@
-# Smart Campus — UJAC (PTP III - Semana 3)
+# Smart Campus — UJAC (PTP III - Semana 5)
 
 Plataforma integrada de gestão operacional, académica e de infraestruturas para a **Universidade Joaquim Alberto Chissano (UJAC)**, desenvolvida no âmbito da disciplina de **Prática Técnico-Profissional III (PTP III)** - Ano Lectivo 2026.
 
 ---
 
-## 📌 Visão Geral
+## Visão Geral
 
 O **Smart Campus Core** é a fundação comum partilhada por toda a turma da PTP III. Em vez de produzir aplicações isoladas e incompatíveis, toda a turma constrói uma **única plataforma integrada** baseada numa arquitectura de **Monólito Modular** num monorepo.
 
@@ -17,7 +17,7 @@ O **Core** fornece:
 
 ---
 
-## 📁 Estrutura do Repositório (`SMART CAMPUS`)
+## Estrutura do Repositório (`SMART CAMPUS`)
 
 ```
 SMART CAMPUS/
@@ -32,10 +32,9 @@ SMART CAMPUS/
 │   │           ├── auth/         # Autenticação e tokens JWT
 │   │           ├── users/        # Perfis e gestão de utilizadores
 │   │           ├── rooms/        # Gestão de salas e edifícios
-│   │           ├── incidents/    # Ocorrências e manutenção
-│   │           ├── parking/      # Gestão de estacionamento e leituras
+│   │           ├── incidents/    # Ocorrências
 │   │           ├── audit/        # Registo e consulta de auditoria
-│   │           └── meu-modulo/   # 🎯 ESPAÇO DEDICADO AO VOSSO MÓDULO PARTICULAR
+│   │           └── financial/    # Módulo particular: Gestão Financeira de Estudantes
 │   │
 │   └── web/                      # Frontend React + TypeScript (Portal Smart Campus)
 │       └── src/
@@ -51,7 +50,7 @@ SMART CAMPUS/
 ├── docs/                         # Documentação técnica e fichas da Semana 3 e 4
 │   ├── arquitectura-smart-campus.md  # Arquitectura oficial e decisões do Core
 │   ├── especificacao-modulo-gestao-financeira.md # Especificação oficial do Módulo Financeiro (Semana 4)
-│   ├── especificacao-modulo-manutencao.md        # Especificação do Módulo de Manutenção
+│   ├── documentacao-exercicios-semana5.md        # Guia de apresentação e conformidade da Semana 5
 │   ├── template-modulo.md        # Template obrigatório para especificação do módulo
 │   └── guia-desenvolvimento-semana3.md # Guia prático de arranque e reprodução
 │
@@ -62,7 +61,7 @@ SMART CAMPUS/
 
 ---
 
-## ⚙️ Pré-Requisitos e Arranque Rápido
+## Pré-Requisitos e Arranque Rápido
 
 ### 1. Requisitos
 - **Node.js**: `v20.x` ou `v22.x`
@@ -103,7 +102,7 @@ curl -s http://localhost:4100/health
 
 ---
 
-## 🔒 Contratos da API REST (`/api/v1`)
+## Contratos da API REST (`/api/v1`)
 
 ### Resposta de Sucesso (`ApiSuccess<T>`)
 ```json
@@ -119,21 +118,16 @@ curl -s http://localhost:4100/health
 ### Resposta de Erro (`ApiError`)
 ```json
 {
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "Token de acesso inválido ou expirado.",
-    "details": []
-  },
-  "meta": {
-    "correlationId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-    "timestamp": "2026-08-27T08:00:00.000Z"
-  }
+  "code": "UNAUTHORIZED",
+  "message": "Token de acesso inválido ou expirado.",
+  "details": [],
+  "correlationId": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 }
 ```
 
 ---
 
-## 🛡️ Roles e Matriz de Permissões (RBAC)
+## Roles e Matriz de Permissões (RBAC)
 
 | Role | Descrição | Permissões |
 |---|---|---|
@@ -141,26 +135,29 @@ curl -s http://localhost:4100/health
 | `TEACHER` | Docente | Consultar salas, criar ocorrências, ver relatórios |
 | `TECHNICIAN` | Técnico de Manutenção | Actualizar estado de ocorrências, gerir dispositivos |
 | `COORDINATOR` | Coordenador de Curso/Sector | Criar/Editar salas, atribuir tarefas, ver auditoria |
+| `FINANCE` | Gestor financeiro | Criar dívidas, registar pagamentos, resolver contestações e consultar relatórios |
 | `ADMIN` | Administrador do Sistema | Controlo total do sistema, utilizadores e auditoria |
 
 ---
 
-## 📝 Guião para Desenvolver o Vosso Módulo (Semana 3)
+## Módulo Financial (Semana 5)
 
-1. Preencher o template em `docs/template-modulo.md` com o problema e escopo do módulo.
-2. Criar a pasta do módulo em `apps/api/src/modules/<nome-do-modulo>/`.
-3. Definir os modelos Prisma em `apps/api/prisma/schema.prisma` e gerar a migration (`npm run db:migrate:dev`).
-4. Implementar a validação Zod em `packages/validation` e os DTOs em `packages/shared-types`.
-5. Criar os controllers, services e routes na API.
-6. Integrar a rota principal no router `/api/v1` em `apps/api/src/routes/v1.ts`.
-7. Registar o módulo no frontend em `apps/web/src/modules/catalog.ts` com o estado correspondente (`development`, `partial` ou `available`).
+O módulo particular do grupo é `financial`, disponível em `apps/api/src/modules/financial/` e registado em `/api/v1/financial`.
+
+Principais capacidades implementadas:
+- Dívidas: `GET/POST /api/v1/financial/debts` e `GET /api/v1/financial/debts/:id`
+- Pagamentos: `POST /api/v1/financial/payments`
+- Estado, histórico e notificações do estudante
+- Contestações com submissão e resolução por RBAC
+- Relatórios e política financeira
+- Prisma, Zod, Swagger, SDK tipado e testes Jest/Supertest
 
 ---
 
-## 👥 Autores / Grupo
+## Autores / Grupo
 
 - **Alípio Anderson Moisés Paco** (Código: 2024080003) — Coordenação, Análise e Desenvolvimento de Software
-- **Jocar Célio Elias** (Código: 2024080038) — Arquitectura, Hardware/IoT e Integração
+- **Josefa Mutemba** — Análise, Testes e Integração do Módulo Financeiro
 
 **Docente:** Msc. Armando Correia  
 **Disciplina:** PTP III — UJAC (2026)

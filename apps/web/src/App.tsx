@@ -15,8 +15,8 @@ export function App() {
         <div className="brand">
           <div className="brand-badge">UJAC · PTP III</div>
           <div>
-            <h1 className="title">Smart Campus Core</h1>
-            <p className="subtitle">Plataforma Integrada de Gestao Universitaria — Semana 3</p>
+            <h1 className="title">Smart Campus Financial</h1>
+            <p className="subtitle">Gestao Financeira de Estudantes — Semana 5</p>
           </div>
         </div>
 
@@ -40,15 +40,15 @@ export function App() {
       <main>
         <section className="glass-card" style={{ marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#f8fafc' }}>
-            Modulo do Grupo: Alipio Paco e Jesefa Mutemba
+            Modulo Financial: Gestao Financeira de Estudantes
           </h2>
           <p style={{ color: '#94a3b8', lineHeight: '1.6', fontSize: '0.95rem' }}>
-            Bem-vindo ao directorio <strong style={{ color: '#60a5fa' }}>SMART CAMPUS</strong>. Este ambiente foi preparado de acordo com as especificacoes da Semana 3 da PTP III (Monolito Modular, Express, Prisma, PostgreSQL, Zod e React).
+            Ambiente preparado para demonstrar dividas, pagamentos, estado financeiro, contestacoes, notificacoes, politicas e relatorios do modulo <strong style={{ color: '#60a5fa' }}>financial</strong>.
           </p>
           <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
-            <span className="status-badge status-development">Semana 3 · Em Desenvolvimento</span>
+            <span className="status-badge status-available">Semana 5 · Financial</span>
             <span style={{ fontSize: '0.85rem', color: '#64748b', alignSelf: 'center' }}>
-              API Base: <code>http://localhost:4100/api/v1</code>
+              API Base: <code>http://localhost:4100/api/v1/financial</code>
             </span>
           </div>
         </section>

@@ -547,7 +547,7 @@ Cada contrato estabelece:
 **Contrato de Erro (`409 Conflict` — Contestação Duplicada):**
 ```json
 {
-  "code": "DUPLICATE_ANALYSIS_REQUEST",
+  "code": "ANALYSIS_REQUEST_ALREADY_OPEN",
   "message": "Já existe um pedido de análise pendente em processamento para esta dívida.",
   "details": [],
   "correlationId": "SC-ANALYSIS-0012"
@@ -555,7 +555,7 @@ Cada contrato estabelece:
 ```
 
 #### Resolver Contestação (`PATCH /api/v1/financial/analysis-requests/:id`)
-- **Intenção Funcional:** Decisão humana da Tesouraria julgando o pedido como `PROCEDENTE` (cancela/anula a dívida e recua cobrança) ou `IMPROCEDENTE` (mantém cobrança).
+- **Intenção Funcional:** Decisão humana da Tesouraria julgando o pedido como `PROCEDENTE` (regulariza a dívida e recalcula o estado) ou `IMPROCEDENTE` (mantém cobrança).
 - **Quem Consome:** `FINANCE` e `ADMIN`.
 
 **Contrato de Sucesso (`200 OK` — Julgamento Procedente):**
@@ -964,7 +964,7 @@ curl -s $API/financial/analysis-requests \
 |---|---|
 | **Auth** | JWT obrigatório |
 | **Roles** | `FINANCE`, `ADMIN` |
-| **Finalidade** | Julgar formalmente uma contestação: decidir se é PROCEDENTE (cancela dívida e recalcula estado) ou IMPROCEDENTE (mantém tudo) |
+| **Finalidade** | Julgar formalmente uma contestação: decidir se é PROCEDENTE (regulariza dívida e recalcula estado) ou IMPROCEDENTE (mantém tudo) |
 
 **Exemplo de chamada `curl` — decisão PROCEDENTE:**
 ```bash
@@ -972,7 +972,7 @@ curl -s $API/financial/analysis-requests/ar_00129 \
   -X PATCH -H "$AUTH" -H 'Content-Type: application/json' \
   -d '{
     "decision": "PROCEDENTE",
-    "resolutionNotes": "Pagamento verificado no extracto bancário. Dívida cancelada."
+    "resolutionNotes": "Pagamento verificado no extracto bancário. Dívida regularizada."
   }' | jq
 ```
 
@@ -988,7 +988,7 @@ curl -s $API/financial/analysis-requests/ar_00129 \
     "studentNewFinancialStatus": "ACTIVE",
     "resolvedById": "usr_finance_01",
     "resolvedAt": "2026-09-06T15:00:00.000Z",
-    "resolutionNotes": "Pagamento verificado no extracto bancário. Dívida cancelada."
+    "resolutionNotes": "Pagamento verificado no extracto bancário. Dívida regularizada."
   },
   "meta": {
     "correlationId": "sc-fin-5501w88",
@@ -2088,5 +2088,3 @@ export async function resolveAnalysisRequest(id: string, input, actorId: string,
 - OpenAPI Specification — https://spec.openapis.org/oas/latest.html
 - Docker Compose Documentation — https://docs.docker.com/compose/
 - Zod Schema Validation — https://zod.dev/
-
-

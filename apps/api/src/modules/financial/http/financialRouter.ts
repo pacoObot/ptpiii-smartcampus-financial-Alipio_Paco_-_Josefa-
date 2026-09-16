@@ -27,7 +27,14 @@ const router = Router();
  */
 router.get('/debts', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const studentId = req.user!.role === 'STUDENT' ? req.user!.id : (req.query.studentId as string | undefined);
+    const requestedStudentId = req.query.studentId as string | undefined;
+
+    if (req.user!.role === 'STUDENT' && requestedStudentId && requestedStudentId !== req.user!.id) {
+      sendError(res, 403, 'FORBIDDEN', 'Nao pode listar dividas de outro estudante.');
+      return;
+    }
+
+    const studentId = req.user!.role === 'STUDENT' ? req.user!.id : requestedStudentId;
     const debts = await financialService.listDebts(studentId);
     sendSuccess(res, debts, 200, debts.length);
   } catch (error) {
@@ -42,6 +49,12 @@ router.get('/debts', authenticate, async (req: Request, res: Response, next: Nex
 router.get('/debts/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const debt = await financialService.getDebtById(req.params.id);
+
+    if (req.user!.role === 'STUDENT' && req.user!.id !== debt.studentId) {
+      sendError(res, 403, 'FORBIDDEN', 'Nao pode consultar uma divida de outro estudante.');
+      return;
+    }
+
     sendSuccess(res, debt, 200);
   } catch (error) {
     next(error);

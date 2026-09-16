@@ -281,8 +281,9 @@ export interface FinancialStatusSummaryDto {
 export interface FinancialHistoryDto {
   studentId: string;
   debts: DebtDto[];
+  payments: PaymentDto[];
+  status: FinancialStatusSummaryDto;
   totalDebts: number;
   totalPaid: number;
   totalOutstanding: number;
 }
-

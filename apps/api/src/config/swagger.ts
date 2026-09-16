@@ -21,7 +21,7 @@ export const swaggerDocument = {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: 'Autenticação Bearer JWT. Insira o token do perfil pretendido (FINANCE, ADMIN, STUDENT ou TEACHER) para testar os controlos RBAC.',
+        description: 'Autenticação Bearer JWT. Insira o token do perfil pretendido (FINANCE, ADMIN, STUDENT ou TEACHER) para testar.',
       },
     },
     schemas: {
@@ -131,11 +131,12 @@ export const swaggerDocument = {
         tags: ['Dívidas (Debts)'],
         security: [{ bearerAuth: [] }],
         parameters: [
-          { name: 'studentId', in: 'query', schema: { type: 'string' }, description: 'Filtrar por ID de estudante (apenas FINANCE/ADMIN)' },
+          { name: 'studentId', in: 'query', schema: { type: 'string' }, description: 'Filtrar por ID de estudante (apenas FINANCE/ADMIN). STUDENT recebe 403 se tentar consultar outro estudante.' },
         ],
         responses: {
           '200': { description: 'Lista de dívidas filtrada conforme o perfil RBAC' },
           '401': { description: 'Não autenticado' },
+          '403': { description: 'Acesso Negado (STUDENT a tentar listar dívidas de outro estudante)' },
         },
       },
       post: {
@@ -176,8 +177,9 @@ export const swaggerDocument = {
         },
         responses: {
           '201': { description: 'Pagamento registado com sucesso e dívida atualizada via ACID' },
-          '400': { description: 'Validação Zod ou montante excede o saldo da dívida' },
+          '400': { description: 'Validação Zod, montante diferente do valor da dívida ou dívida cancelada' },
           '403': { description: 'Acesso Negado (apenas FINANCE e ADMIN podem liquidar dívidas)' },
+          '409': { description: 'Dívida já regularizada' },
         },
       },
     },
@@ -229,6 +231,7 @@ export const swaggerDocument = {
         responses: {
           '201': { description: 'Contestação submetida e SLA de análise ativado' },
           '400': { description: 'Validação Zod (justificação com menos de 10 caracteres ou ID inválido)' },
+          '409': { description: 'Contestação já aberta ou dívida já regularizada' },
         },
       },
     },
@@ -244,8 +247,9 @@ export const swaggerDocument = {
         },
         responses: {
           '200': { description: 'Contestação resolvida com sucesso' },
-          '400': { description: 'Regra de Negócio: Não é possível re-resolver uma contestação já decidida' },
           '403': { description: 'Acesso Negado (STUDENT não pode decidir a sua própria contestação)' },
+          '404': { description: 'Pedido de análise não encontrado' },
+          '409': { description: 'Regra de Negócio: Não é possível re-resolver uma contestação já decidida' },
         },
       },
     },

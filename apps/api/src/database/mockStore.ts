@@ -7,7 +7,7 @@ import crypto from 'crypto';
 
 // Tipos internos (reflectem os modelos Prisma)
 
-export type Role = 'STUDENT' | 'TEACHER' | 'TECHNICIAN' | 'COORDINATOR' | 'ADMIN';
+export type Role = 'STUDENT' | 'TEACHER' | 'TECHNICIAN' | 'COORDINATOR' | 'ADMIN' | 'FINANCE';
 export type RoomType = 'CLASSROOM' | 'LAB' | 'AUDITORIUM' | 'OFFICE' | 'OTHER';
 export type IncidentStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 export type IncidentPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
@@ -120,7 +120,7 @@ export interface StoredRefreshToken {
 
 export const users: StoredUser[] = [
   {
-    id: 'usr_admin_01',
+    id: 'usr_demo_admin_01',
     name: 'Alipio Paco',
     email: 'admin@smartcampus.demo',
     passwordHash: 'Admin123!',
@@ -129,6 +129,28 @@ export const users: StoredUser[] = [
     isActive: true,
     createdAt: new Date('2026-01-15'),
     updatedAt: new Date('2026-01-15'),
+  },
+  {
+    id: 'usr_admin_01',
+    name: 'Administrador Geral',
+    email: 'admin@ujac.ac.mz',
+    passwordHash: '123456',
+    role: 'ADMIN',
+    department: 'Direcao TIC',
+    isActive: true,
+    createdAt: new Date('2026-09-10'),
+    updatedAt: new Date('2026-09-10'),
+  },
+  {
+    id: 'usr_finance_01',
+    name: 'Gestor Financeiro',
+    email: 'financas@ujac.ac.mz',
+    passwordHash: '123456',
+    role: 'FINANCE',
+    department: 'Direcao Financeira e Contabilidade',
+    isActive: true,
+    createdAt: new Date('2026-09-10'),
+    updatedAt: new Date('2026-09-10'),
   },
   {
     id: 'usr_coord_01',
@@ -153,7 +175,7 @@ export const users: StoredUser[] = [
     updatedAt: new Date('2026-02-01'),
   },
   {
-    id: 'usr_student_01',
+    id: 'usr_demo_student_01',
     name: 'Maria Fernanda',
     email: 'maria.fernanda@smartcampus.demo',
     passwordHash: 'Admin123!',
@@ -163,6 +185,30 @@ export const users: StoredUser[] = [
     isActive: true,
     createdAt: new Date('2026-02-10'),
     updatedAt: new Date('2026-02-10'),
+  },
+  {
+    id: 'usr_student_01',
+    name: 'Alipio Anderson Moises Paco',
+    email: 'alipio.paco@estudante.ujac.ac.mz',
+    passwordHash: '123456',
+    role: 'STUDENT',
+    studentId: '2024080003',
+    department: 'Engenharia Informatica',
+    isActive: true,
+    createdAt: new Date('2026-09-10'),
+    updatedAt: new Date('2026-09-10'),
+  },
+  {
+    id: 'usr_student_02',
+    name: 'Josefa Muthemba',
+    email: 'josefa.muthemba@estudante.ujac.ac.mz',
+    passwordHash: '123456',
+    role: 'STUDENT',
+    studentId: '2024080038',
+    department: 'Engenharia Informatica',
+    isActive: true,
+    createdAt: new Date('2026-09-10'),
+    updatedAt: new Date('2026-09-10'),
   },
   {
     id: 'usr_teacher_01',
@@ -261,7 +307,7 @@ export const incidents: StoredIncident[] = [
     title: 'Projector nao funciona no LAB-INF-01',
     description: 'O projector da sala de laboratorio nao da sinal de energia desde segunda-feira.',
     roomId: 'room_01',
-    reportedById: 'usr_student_01',
+    reportedById: 'usr_demo_student_01',
     status: 'OPEN',
     priority: 'HIGH',
     createdAt: new Date('2026-08-25'),
@@ -316,7 +362,7 @@ export const maintenanceRequests: StoredMaintenanceRequest[] = [
     priority: 'MEDIUM',
     status: 'OPEN',
     roomId: 'room_02',
-    reportedById: 'usr_student_01',
+    reportedById: 'usr_demo_student_01',
     createdAt: new Date('2026-08-27T07:00:00Z'),
     updatedAt: new Date('2026-08-27T07:00:00Z'),
   },
@@ -341,17 +387,17 @@ export const auditEvents: StoredAuditEvent[] = [
   {
     id: 'aud_01',
     correlationId: crypto.randomUUID(),
-    userId: 'usr_admin_01',
+    userId: 'usr_demo_admin_01',
     action: 'USER_LOGIN',
     module: 'auth',
-    resourceId: 'usr_admin_01',
+    resourceId: 'usr_demo_admin_01',
     payload: { email: 'admin@smartcampus.demo', ip: '127.0.0.1' },
     createdAt: new Date('2026-08-27T06:00:00Z'),
   },
   {
     id: 'aud_02',
     correlationId: crypto.randomUUID(),
-    userId: 'usr_student_01',
+    userId: 'usr_demo_student_01',
     action: 'MAINTENANCE_REQUEST_CREATED',
     module: 'maintenance',
     resourceId: 'mnt_02',

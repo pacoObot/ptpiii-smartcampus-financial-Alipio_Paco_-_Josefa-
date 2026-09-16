@@ -1,8 +1,7 @@
 // application/financialService.ts
 // Camada de aplicacao: casos de uso do modulo financeiro
-// Usa Prisma para persistencia real em PostgreSQL
 
-import { PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { CreateDebtInput, CreatePaymentInput, CreateAnalysisRequestInput, ResolveAnalysisRequestInput, UpdateFinancialPolicyInput } from '@smart-campus/validation';
 import {
   generateCode,
@@ -16,18 +15,47 @@ import {
 } from '../domain/financial.domain';
 import { FinancialStatusSummaryDto, FinancialHistoryDto } from '@smart-campus/shared-types';
 import { auditLog } from '../../../utils/audit';
+import { prisma } from '../infrastructure/financialRepository';
 
-const prisma = new PrismaClient();
+interface FinancialAuditCommand {
+  action: string;
+  resourceId: string;
+  actorId: string;
+  correlationId: string;
+  payload?: Record<string, unknown>;
+}
+
+async function auditFinancial(command: FinancialAuditCommand): Promise<void> {
+  await auditLog({
+    action: command.action,
+    module: 'financial',
+    resourceId: command.resourceId,
+    actorId: command.actorId,
+    correlationId: command.correlationId,
+    payload: command.payload,
+  });
+
+  await prisma.auditEvent.create({
+    data: {
+      action: command.action,
+      module: 'financial',
+      resourceId: command.resourceId,
+      userId: command.actorId,
+      correlationId: command.correlationId,
+      payload: (command.payload ?? {}) as Prisma.InputJsonValue,
+    },
+  });
+}
 
 // Funcao auxiliar: cria uma notificacao interna para o estudante (INV-8)
-async function createNotification(tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>, studentId: string, title: string, message: string) {
+async function createNotification(tx: Prisma.TransactionClient, studentId: string, title: string, message: string) {
   await tx.financialNotification.create({
     data: { studentId, title, message },
   });
 }
 
 // Funcao auxiliar: recalcula e actualiza o estado financeiro do estudante (INV-1, INV-6)
-async function recalcularEstado(tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>, studentId: string) {
+async function recalcularEstado(tx: Prisma.TransactionClient, studentId: string) {
   const dividas_vencidas = await tx.debt.count({
     where: { studentId, status: 'VENCIDA' },
   });
@@ -67,32 +95,40 @@ export async function listDebts(studentId?: string) {
 // Exercicio 7: code e UNIQUE — Prisma rejeita duplicados
 export async function createDebt(input: CreateDebtInput, actorId: string, correlationId: string) {
   const code = generateCode('DB');
+  const dueDate = new Date(input.dueDate);
+  const initialStatus = dueDate < new Date() ? 'VENCIDA' : 'PENDENTE';
 
-  const debt = await prisma.debt.create({
-    data: {
-      code,
-      studentId: input.studentId,
-      title: input.title,
-      description: input.description ?? null,
-      amount: input.amount,
-      origin: input.origin,
-      dueDate: new Date(input.dueDate),
-      status: 'PENDENTE',
-    },
+  const debt = await prisma.$transaction(async (tx) => {
+    const created = await tx.debt.create({
+      data: {
+        code,
+        studentId: input.studentId,
+        title: input.title,
+        description: input.description ?? null,
+        amount: input.amount,
+        origin: input.origin,
+        dueDate,
+        status: initialStatus,
+      },
+    });
+
+    // INV-1/INV-6: se a divida ja nasceu vencida, o estudante fica bloqueado imediatamente.
+    await recalcularEstado(tx, input.studentId);
+
+    // INV-8: notificar o estudante
+    await createNotification(
+      tx,
+      input.studentId,
+      'Nova Divida Registada',
+      `Foi emitida uma nova divida "${input.title}" no valor de ${input.amount} MZN, com vencimento em ${dueDate.toLocaleDateString('pt-PT')}.`
+    );
+
+    return created;
   });
 
-  // INV-8: notificar o estudante
-  await createNotification(
-    prisma,
-    input.studentId,
-    'Nova Divida Registada',
-    `Foi emitida uma nova divida "${input.title}" no valor de ${input.amount} MZN, com vencimento em ${new Date(input.dueDate).toLocaleDateString('pt-PT')}.`
-  );
-
   // INV-4: registar auditoria
-  await auditLog({
+  await auditFinancial({
     action: 'DEBT_CREATED',
-    module: 'financial',
     resourceId: debt.id,
     actorId,
     correlationId,
@@ -130,10 +166,25 @@ export async function createPayment(input: CreatePaymentInput, actorId: string, 
   }
 
   // Exercicio 4 — Regra de negocio: nao permite pagar uma divida ja regularizada ou cancelada
-  if (debt.status === 'REGULARIZADA' || debt.status === 'CANCELADA') {
-    const err = new Error('Esta divida ja foi regularizada ou cancelada e nao pode receber novos pagamentos') as Error & { statusCode: number; code: string };
+  if (debt.status === 'REGULARIZADA') {
+    const err = new Error('Esta divida ja foi regularizada e nao pode receber novos pagamentos') as Error & { statusCode: number; code: string };
+    err.statusCode = 409;
+    err.code = 'DEBT_ALREADY_REGULARIZED';
+    throw err;
+  }
+
+  if (debt.status === 'CANCELADA') {
+    const err = new Error('Esta divida foi cancelada e nao pode receber novos pagamentos') as Error & { statusCode: number; code: string };
     err.statusCode = 400;
-    err.code = 'DEBT_ALREADY_CLOSED';
+    err.code = 'DEBT_CANCELLED';
+    throw err;
+  }
+
+  const debtAmount = debt.amount.toNumber();
+  if (Math.round(input.amountPaid * 100) !== Math.round(debtAmount * 100)) {
+    const err = new Error(`O pagamento deve liquidar o valor total da divida (${debtAmount} MZN)`) as Error & { statusCode: number; code: string };
+    err.statusCode = 400;
+    err.code = 'PAYMENT_AMOUNT_MISMATCH';
     throw err;
   }
 
@@ -177,9 +228,8 @@ export async function createPayment(input: CreatePaymentInput, actorId: string, 
   });
 
   // INV-4: Auditoria (fora da transaccao — nao e critica para a consistencia)
-  await auditLog({
+  await auditFinancial({
     action: 'PAYMENT_CREATED',
-    module: 'financial',
     resourceId: resultado.payment.id,
     actorId,
     correlationId,
@@ -206,12 +256,15 @@ export async function getStudentStatus(studentId: string): Promise<FinancialStat
   });
 
   const totalVencido = dividasVencidas.reduce((sum, d) => sum + d.amount.toNumber(), 0);
+  const calculatedStatus = dividasVencidas.length > 0 ? 'BLOCKED' : 'ACTIVE';
 
   return {
     studentId,
-    status: fs?.status === 'BLOCKED' ? 'BLOCKED' : 'ACTIVE',
-    reason: fs?.reason ?? null,
-    blockedAt: fs?.blockedAt?.toISOString() ?? null,
+    status: calculatedStatus,
+    reason: calculatedStatus === 'BLOCKED'
+      ? (fs?.reason ?? `Estudante possui ${dividasVencidas.length} divida(s) vencida(s)`)
+      : null,
+    blockedAt: calculatedStatus === 'BLOCKED' ? (fs?.blockedAt?.toISOString() ?? null) : null,
     overdueDebtsCount: dividasVencidas.length,
     totalOverdueAmount: totalVencido,
     updatedAt: fs?.updatedAt.toISOString() ?? new Date().toISOString(),
@@ -223,14 +276,19 @@ export async function getStudentStatus(studentId: string): Promise<FinancialStat
 // =============================================================================
 
 export async function getStudentHistory(studentId: string): Promise<FinancialHistoryDto> {
-  const debts = await prisma.debt.findMany({
-    where: { studentId },
-    orderBy: { createdAt: 'desc' },
-  });
+  const [debts, payments, status] = await Promise.all([
+    prisma.debt.findMany({
+      where: { studentId },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.payment.findMany({
+      where: { studentId },
+      orderBy: { createdAt: 'desc' },
+    }),
+    getStudentStatus(studentId),
+  ]);
 
-  const totalPago = debts
-    .filter(d => d.status === 'REGULARIZADA')
-    .reduce((sum, d) => sum + d.amount.toNumber(), 0);
+  const totalPago = payments.reduce((sum, payment) => sum + payment.amountPaid.toNumber(), 0);
 
   const totalEmAberto = debts
     .filter(d => d.status === 'PENDENTE' || d.status === 'VENCIDA')
@@ -239,6 +297,8 @@ export async function getStudentHistory(studentId: string): Promise<FinancialHis
   return {
     studentId,
     debts: debts.map(toDebtDto),
+    payments: payments.map(toPaymentDto),
+    status,
     totalDebts: debts.length,
     totalPaid: totalPago,
     totalOutstanding: totalEmAberto,
@@ -267,6 +327,13 @@ export async function createAnalysisRequest(input: CreateAnalysisRequestInput, s
     throw err;
   }
 
+  if (debt.status === 'REGULARIZADA') {
+    const err = new Error('Esta divida ja se encontra regularizada e nao pode ser contestada') as Error & { statusCode: number; code: string };
+    err.statusCode = 409;
+    err.code = 'DEBT_ALREADY_REGULARIZED';
+    throw err;
+  }
+
   // Verificar se ja existe contestacao pendente (qualidade de dados)
   const contestacaoPendente = await prisma.analysisRequest.findFirst({
     where: { debtId: input.debtId, status: 'PENDENTE_ANALISE' },
@@ -274,7 +341,7 @@ export async function createAnalysisRequest(input: CreateAnalysisRequestInput, s
   if (contestacaoPendente) {
     const err = new Error('Ja existe um pedido de analise pendente para esta divida') as Error & { statusCode: number; code: string };
     err.statusCode = 409;
-    err.code = 'DUPLICATE_ANALYSIS_REQUEST';
+    err.code = 'ANALYSIS_REQUEST_ALREADY_OPEN';
     throw err;
   }
 
@@ -291,9 +358,8 @@ export async function createAnalysisRequest(input: CreateAnalysisRequestInput, s
     },
   });
 
-  await auditLog({
+  await auditFinancial({
     action: 'ANALYSIS_REQUEST_CREATED',
-    module: 'financial',
     resourceId: ar.id,
     actorId: studentId,
     correlationId,
@@ -317,7 +383,7 @@ export async function resolveAnalysisRequest(id: string, input: ResolveAnalysisR
   // Regra de negocio: nao pode resolver o que ja foi decidido
   if (ar.status !== 'PENDENTE_ANALISE') {
     const err = new Error('Este pedido de analise ja foi resolvido e nao pode ser alterado') as Error & { statusCode: number; code: string };
-    err.statusCode = 400;
+    err.statusCode = 409;
     err.code = 'ANALYSIS_REQUEST_ALREADY_RESOLVED';
     throw err;
   }
@@ -333,11 +399,11 @@ export async function resolveAnalysisRequest(id: string, input: ResolveAnalysisR
       },
     });
 
-    // Se procedente: cancelar a divida e recalcular estado (INV-6)
+    // Se procedente: regularizar a divida e recalcular estado (INV-6)
     if (input.decision === 'PROCEDENTE') {
       await tx.debt.update({
         where: { id: ar.debtId },
-        data: { status: 'CANCELADA' },
+        data: { status: 'REGULARIZADA' },
       });
       await recalcularEstado(tx, ar.studentId);
     }
@@ -354,9 +420,8 @@ export async function resolveAnalysisRequest(id: string, input: ResolveAnalysisR
     return updated;
   });
 
-  await auditLog({
+  await auditFinancial({
     action: 'ANALYSIS_REQUEST_RESOLVED',
-    module: 'financial',
     resourceId: id,
     actorId,
     correlationId,
@@ -412,9 +477,8 @@ export async function updatePolicy(policyId: string, input: UpdateFinancialPolic
     },
   });
 
-  await auditLog({
+  await auditFinancial({
     action: 'POLICY_UPDATED',
-    module: 'financial',
     resourceId: policy.id,
     actorId,
     correlationId,

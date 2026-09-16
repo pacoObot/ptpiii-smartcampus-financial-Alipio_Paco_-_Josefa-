@@ -34,7 +34,7 @@ apps/api/src/modules/financial/
 ├── http/
 │   └── financialRouter.ts          -- Rotas Express, autenticação JWT, autorização RBAC
 └── tests/
-    └── financial.test.ts           -- Suíte de 11 testes Jest + Supertest
+    └── financial.test.ts           -- Suíte de 18 testes Jest + Supertest
 ```
 
 ### Divisão de Responsabilidades por Camada
@@ -225,7 +225,7 @@ export const createDebtSchema = z.object({
 - Contestação impedida se dívida for de outro estudante (403) ou já existir contestação pendente (409).
 
 ### Exercício 6 — Testes Automatizados (Jest & Supertest)
-- **11 testes com 100% de sucesso** cobrindo 400, 401, 403, 404, 409 e 200/201.
+- **18 testes com 100% de sucesso** cobrindo 400, 401, 403, 404, 409, 200, histórico com pagamentos/estado, contestação e regras financeiras.
 
 ### Exercício 7 — Documentação Swagger & OpenAPI
 - Swagger UI em `http://localhost:4100/api/docs`.
@@ -364,13 +364,14 @@ A validação de dados é **estrita e contínua** na camada HTTP antes de atingi
 Em sistemas financeiros, as operações de atualização e apagar não podem ser simples "OVERWRITE" ou "DROP".
 
 #### Regras de Atualização (Update):
-1. **Dívidas Encerradas:** Uma dívida com estado `REGULARIZADA` ou `CANCELADA` rejeita novas tentativas de pagamento (retorna `400 DEBT_ALREADY_CLOSED`).
+1. **Dívidas Encerradas:** Uma dívida `REGULARIZADA` rejeita novas tentativas de pagamento (`409 DEBT_ALREADY_REGULARIZED`) e uma dívida `CANCELADA` rejeita pagamento (`400 DEBT_CANCELLED`).
 2. **Contestações Resolvidas:** Um pedido de análise com estado diferente de `PENDENTE_ANALISE` não pode ser alterado ou re-decidido (retorna `400 ANALYSIS_REQUEST_ALREADY_RESOLVED`).
-3. **Imutabilidade de Pagamentos:** Registos de pagamentos são imutáveis.
+3. **Montante Exacto:** O pagamento só regulariza a dívida quando liquida o valor total registado.
+4. **Imutabilidade de Pagamentos:** Registos de pagamentos são imutáveis.
 
 #### Regras de Eliminação (Delete / Soft Delete):
 - **Remoção Física Proibida:** Nenhuma entidade financeira (`Debt`, `Payment`) possui rota HTTP `DELETE`.
-- **Soft Delete / Cancelamento:** Para anular uma dívida indevida, altera-se o seu estado para `CANCELADA` através da resolução de um pedido de análise, mantendo o histórico intacto para auditoria contábil.
+- **Regularização por Contestação Procedente:** Quando a Tesouraria julga uma contestação `PROCEDENTE`, a dívida passa para `REGULARIZADA` e o estado financeiro é recalculado, mantendo o histórico intacto para auditoria contábil.
 
 ---
 

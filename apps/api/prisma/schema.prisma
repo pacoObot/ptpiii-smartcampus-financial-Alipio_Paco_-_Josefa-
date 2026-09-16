@@ -189,7 +189,7 @@ model AuditEvent {
 // =============================================================================
 // MODULO: Gestao Financeira de Estudantes (financial)
 // Grupo: Alipio Anderson Moises Paco (2024080003) & Jesefa Mutemba
-// Semana 5 - PTP III / UJAC
+
 // =============================================================================
 
 enum DebtStatus {

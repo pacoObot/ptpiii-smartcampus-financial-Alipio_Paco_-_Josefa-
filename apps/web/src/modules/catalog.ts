@@ -30,12 +30,13 @@ export const campusModules: CampusModuleInfo[] = [
     teamMembers: ['Smart Campus Core Team'],
   },
   {
-    id: 'maintenance-incidents',
-    name: 'Gestao de Manutencao e Ocorrencias (Grupo 5)',
-    description: 'Modulo de gestao de avarias, pedidos de intervencao, prioridades, atribuicao de tecnicos e historico.',
+    id: 'financial-students',
+    name: 'Gestao Financeira de Estudantes',
+    description: 'Modulo de dividas, pagamentos, estado financeiro, contestacoes, notificacoes, politicas e relatorios.',
     status: 'available',
     category: 'particular',
-    route: '/api/v1/maintenance',
+    route: '/api/v1/financial',
+    requiredRoles: ['STUDENT', 'FINANCE', 'ADMIN'],
     teamMembers: ['Alipio Paco (2024080003)', 'Jesefa Mutemba'],
   },
   {

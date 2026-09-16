@@ -15,6 +15,7 @@
     "db:migrate:dev": "npm run db:migrate:dev --workspace=@smart-campus/api",
     "db:seed": "npm run db:seed --workspace=@smart-campus/api",
     "test": "npm run test --workspaces --if-present",
+    "test:financial": "npm run test:financial --workspace=@smart-campus/api",
     "lint": "npm run lint --workspaces --if-present"
   },
   "keywords": [
