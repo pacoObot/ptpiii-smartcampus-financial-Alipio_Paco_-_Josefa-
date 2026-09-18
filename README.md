@@ -76,18 +76,83 @@ Os avisos são guardados na mesma transacção da operação financeira e enviad
 
 ## Arquitectura e organização
 
-Monorepo com npm workspaces e backend organizado como monólito modular. A aplicação utiliza **TypeScript, Express, React, PostgreSQL, Prisma e Zod**. As integrações externas são definidas por contratos HTTP.
+A arquitectura segue o modelo definido no manual do projecto: **monólito modular num monorepo npm**, com separação por camadas. O Core concentra autenticação, utilizadores, permissões e auditoria; o módulo financeiro acrescenta as suas regras de negócio, reutilizando esses serviços transversais.
 
-| Directório | Responsabilidade |
-|---|---|
-| `apps/api` | API, autenticação e módulos de negócio |
-| `apps/api/src/modules/financial` | Regras de negócio e rotas financeiras |
-| `apps/api/prisma` | Modelo de dados e migrações |
-| `apps/web` | Interface web |
-| `packages/shared-types` | Tipos e contratos partilhados |
-| `packages/validation` | Schemas de validação |
-| `packages/api-client` | Cliente TypeScript da API |
-| `docs` | Especificações, contratos e modelo de dados |
+A API executa num único processo Express, com PostgreSQL comum e responsabilidade lógica dos dados por módulo. A aplicação utiliza **TypeScript, React com Vite, Express, Prisma e Zod**. As limitações de persistência do Core estão descritas em [Estado da implementação](#estado-da-implementação).
+
+```mermaid
+flowchart TD
+    WEB[Interface React — apps/web] --> CLIENT[Cliente HTTP — packages/api-client]
+    CLIENT -->|REST /api/v1 · JWT| HTTP[API Express · autenticação · autorização · validação]
+    HTTP --> APP[Aplicação · casos de uso e transacções]
+    APP --> DOMAIN[Domínio · entidades e invariantes]
+    APP --> DATA[Persistência · Prisma]
+    DATA --> DB[(PostgreSQL)]
+    APP -->|HTTP após commit| NOTIF[Serviço externo de Notificações]
+```
+
+Os módulos alojados na mesma API comunicam através de serviços ou casos de uso internos. HTTP é usado nas integrações com sistemas externos, como o receptor de Notificações descrito nos contratos.
+
+### Estrutura do repositório
+
+A organização abaixo apresenta as principais pastas existentes e a sua responsabilidade:
+
+```text
+.
+├── apps/
+│   ├── api/
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma       # Modelo de dados
+│   │   │   └── migrations/        # Evolução versionada da base de dados
+│   │   └── src/
+│   │       ├── app.ts             # Configuração da aplicação Express
+│   │       ├── server.ts          # Arranque do servidor
+│   │       ├── config/            # Ambiente e Swagger
+│   │       ├── database/          # Dados temporários do Core
+│   │       ├── middlewares/       # Autenticação, correlação e erros
+│   │       ├── routes/            # Registo das rotas /api/v1
+│   │       ├── modules/           # Core e módulos de negócio
+│   │       │   └── financial/     # Gestão financeira
+│   │       ├── prisma/            # Seed de dados
+│   │       └── utils/             # Respostas e auditoria partilhadas
+│   └── web/
+│       └── src/
+│           ├── App.tsx           # Interface da aplicação
+│           └── modules/          # Catálogo de módulos
+├── packages/
+│   ├── shared-types/             # DTOs, interfaces e contratos comuns
+│   ├── validation/               # Schemas Zod partilhados
+│   └── api-client/               # Cliente HTTP utilizado pelo frontend
+├── docs/                         # Especificações, contratos e diagramas
+├── docker-compose.yml            # PostgreSQL e broker MQTT
+├── .env.example                  # Referência das variáveis de ambiente
+└── package.json                  # Workspaces e comandos do projecto
+```
+
+### Organização interna do módulo financeiro
+
+A estrutura base de cada módulo separa `domain/`, `application/` e `http/`. O Financeiro acrescenta pastas para persistência, integrações, schemas e testes:
+
+```text
+apps/api/src/modules/financial/
+├── domain/           # Entidades, estados, invariantes e conversão para DTOs
+├── application/      # Casos de uso e coordenação das operações financeiras
+├── http/             # Rotas, permissões, validação de pedidos e respostas
+├── infrastructure/   # Repositório Prisma e cliente externo de Notificações
+├── schemas/          # Exportação dos schemas de validação do módulo
+└── tests/            # Testes das operações e da entrega de notificações
+```
+
+### Regras de integração no Core
+
+- **Separação de responsabilidades:** HTTP trata o contrato do pedido; aplicação coordena casos de uso e transacções; domínio concentra regras e invariantes, sem depender de Express ou Prisma.
+- **Contratos partilhados:** DTOs em `shared-types`, validação em `validation` e consumo pelo frontend através de `api-client`.
+- **Segurança na API:** autenticação JWT, autorização por perfil e validação Zod antes da execução das regras de negócio.
+- **Rotas e rastreabilidade:** endpoints de domínio sob `/api/v1`, com `/health` separado; respostas normalizadas, `x-correlation-id` e auditoria das mutações relevantes.
+- **Persistência reproduzível:** alterações ao modelo acompanhadas de migrações e dados iniciais para desenvolvimento.
+- **Integração visual:** módulos registados em `apps/web/src/modules/catalog.ts`, com o estado de disponibilidade correspondente à implementação.
+
+A ordem de compilação dos componentes é `shared-types → validation → api-client → api → web`.
 
 ## Execução local
 
