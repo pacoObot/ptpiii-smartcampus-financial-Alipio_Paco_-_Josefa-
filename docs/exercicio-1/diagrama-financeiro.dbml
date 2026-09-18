@@ -1,0 +1,177 @@
+Project Gestao_Financeira {
+  database_type: 'PostgreSQL'
+  Note: 'Modelo local; NotificationExternal representa um contrato externo proposto.'
+}
+
+Enum Role {
+  STUDENT
+  TEACHER
+  TECHNICIAN
+  COORDINATOR
+  ADMIN
+  FINANCE
+}
+
+Enum DebtStatus {
+  PENDENTE
+  VENCIDA
+  REGULARIZADA
+  CANCELADA
+}
+
+Enum FinancialStatusType {
+  ACTIVE
+  BLOCKED
+}
+
+Enum AnalysisRequestStatus {
+  PENDENTE_ANALISE
+  PROCEDENTE
+  IMPROCEDENTE
+}
+
+Enum PaymentMethod {
+  BANK_TRANSFER
+  CASH_DEPOSIT
+  MOBILE_MONEY
+  POS
+}
+
+Enum NotificationDeliveryStatus {
+  LOCAL_ONLY
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+Table users {
+  id varchar [pk, not null]
+  name varchar [not null]
+  email varchar [not null, unique]
+  passwordHash varchar [not null]
+  role Role [not null]
+  studentId varchar [note: 'Numero de estudante, nao e FK']
+  department varchar
+  isActive boolean [not null]
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table debts {
+  id varchar [pk, not null]
+  code varchar [not null, unique]
+  studentId varchar [not null]
+  title varchar [not null]
+  description varchar
+  amount decimal(10,2) [not null]
+  origin varchar [not null]
+  dueDate timestamp [not null]
+  status DebtStatus [not null]
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table payments {
+  id varchar [pk, not null]
+  code varchar [not null, unique]
+  debtId varchar [not null]
+  studentId varchar [not null]
+  amountPaid decimal(10,2) [not null]
+  paymentMethod PaymentMethod [not null]
+  referenceCode varchar [not null]
+  confirmedById varchar [not null]
+  paidAt timestamp [not null]
+  createdAt timestamp [not null]
+}
+
+Table financial_status {
+  id varchar [pk, not null]
+  studentId varchar [not null, unique]
+  status FinancialStatusType [not null]
+  blockedAt timestamp
+  reason varchar
+  updatedAt timestamp [not null]
+}
+
+Table analysis_requests {
+  id varchar [pk, not null]
+  code varchar [not null, unique]
+  debtId varchar [not null]
+  studentId varchar [not null]
+  reason varchar [not null]
+  status AnalysisRequestStatus [not null]
+  slaDueDate timestamp [not null]
+  resolvedById varchar
+  resolvedAt timestamp
+  resolutionNotes varchar
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table financial_notifications {
+  id varchar [pk, not null]
+  studentId varchar [not null]
+  title varchar [not null]
+  message varchar [not null]
+  read boolean [not null]
+  createdAt timestamp [not null]
+  eventType varchar [not null]
+  resourceId varchar
+  correlationId varchar
+  deliveryStatus NotificationDeliveryStatus [not null]
+  externalNotificationId varchar [unique, note: 'Referencia externa logica via HTTP; nao e FK PostgreSQL']
+  attempts integer [not null]
+  nextAttemptAt timestamp [not null]
+  lastAttemptAt timestamp
+  sentAt timestamp
+  lastError varchar
+  lockedUntil timestamp
+  lockToken varchar
+}
+
+Table financial_policies {
+  id varchar [pk, not null]
+  code varchar [not null, unique]
+  gracePeriodDays integer [not null]
+  autoBlockEnabled boolean [not null]
+  maxDebtAmount decimal(10,2) [not null]
+  updatedAt timestamp [not null]
+}
+
+Ref: users.id < debts.studentId [delete: restrict, update: cascade]
+Ref: users.id < payments.studentId [delete: restrict, update: cascade]
+Ref: users.id < payments.confirmedById [delete: restrict, update: cascade]
+Ref: users.id < analysis_requests.studentId [delete: restrict, update: cascade]
+Ref: users.id < analysis_requests.resolvedById [delete: restrict, update: cascade]
+Ref: users.id < financial_notifications.studentId [delete: restrict, update: cascade]
+Ref: users.id - financial_status.studentId [delete: restrict, update: cascade]
+Ref: debts.id < payments.debtId
+Ref: debts.id < analysis_requests.debtId
+
+// Bloco conceptual do modulo externo. Nao criar esta tabela no Prisma local.
+Table NotificationExternal {
+  id varchar [pk, note: 'Identificador devolvido pela API externa']
+  sourceModule varchar [not null]
+  sourceEventId varchar [not null]
+  recipientUserId varchar [not null]
+  indexes {
+    (sourceModule, sourceEventId) [unique]
+  }
+  Note: 'PROPOSTA — modulo de outro grupo; campos minimos do contrato, nao esquema completo.'
+}
+
+// Apenas representacao conceptual no diagrama; nao exportar esta Ref como FK SQL.
+Ref relacao_logica_via_API: NotificationExternal.id - financial_notifications.externalNotificationId
+
+
+// Integrações académicas propostas (contratos, não FK SQL):
+// Estudantes e Docentes -> Financeiro: identidade académica via User.id.
+// Avaliações -> Financeiro: consulta regularidade antes de devolver notas.
+// ACTIVE: permite consulta; BLOCKED: impede consulta pelo estudante.
+// Falha na consulta: verificação indisponível; não devolver notas nem inferir BLOCKED.
+// Avaliações mantém as notas e aplica a restrição na sua API.
+// Avaliações -> Financeiro: pedido de taxa associado à inscrição.
+// Horários -> Financeiro/Avaliações: sessão, data, sala e docente responsável.
+// Avaliações -> Horários: inscrições confirmadas.
+// Ver diagrama-financeiro.svg e ../integracao-modulos-academicos.md.

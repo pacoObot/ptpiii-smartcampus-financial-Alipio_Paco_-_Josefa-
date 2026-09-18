@@ -1,0 +1,223 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "PROPOSTA — Receptor de notificacoes financeiras",
+    "version": "1.0.0",
+    "description": "A implementar e validar pelo grupo de Notificacoes. Este ficheiro nao cria uma rota no Financeiro."
+  },
+  "paths": {
+    "/api/v1/notifications": {
+      "post": {
+        "operationId": "receiveFinancialNotification",
+        "security": [
+          {
+            "serviceBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "financial:<sourceEventId>; deduplicar atomicamente por sourceModule + sourceEventId"
+          },
+          {
+            "name": "x-correlation-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sourceModule",
+                  "sourceEventId",
+                  "recipientUserId",
+                  "eventType",
+                  "resourceId",
+                  "title",
+                  "message",
+                  "channel",
+                  "occurredAt"
+                ],
+                "properties": {
+                  "sourceModule": {
+                    "type": "string",
+                    "enum": [
+                      "financial"
+                    ]
+                  },
+                  "sourceEventId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "recipientUserId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "eventType": {
+                    "type": "string",
+                    "enum": [
+                      "DEBT_CREATED",
+                      "PAYMENT_CONFIRMED",
+                      "ANALYSIS_REQUEST_RESOLVED",
+                      "FINANCIAL_NOTICE"
+                    ]
+                  },
+                  "resourceId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "channel": {
+                    "type": "string",
+                    "enum": [
+                      "IN_APP"
+                    ]
+                  },
+                  "occurredAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aviso persistido; repeticoes devolvem o mesmo id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "sourceEventId",
+                        "status"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "sourceEventId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACCEPTED"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Aviso persistido; repeticoes devolvem o mesmo id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "sourceEventId",
+                        "status"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "sourceEventId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACCEPTED"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados invalidos"
+          },
+          "401": {
+            "description": "Credencial invalida"
+          },
+          "403": {
+            "description": "Origem sem permissao"
+          },
+          "404": {
+            "description": "Destinatario inexistente"
+          },
+          "409": {
+            "description": "Mesmo evento com conteudo diferente"
+          },
+          "429": {
+            "description": "Limite de pedidos"
+          },
+          "500": {
+            "description": "Erro interno"
+          },
+          "503": {
+            "description": "Indisponibilidade temporaria"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "serviceBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Credencial de servico fornecida pelo receptor"
+      }
+    }
+  }
+}
