@@ -4,6 +4,8 @@
 // Os schemas estao definidos no pacote partilhado @smart-campus/validation.
 
 export {
+  financialNotificationIdSchema,
+  retryFinancialNotificationSchema,
   // Schema de criacao de Divida (POST /api/v1/financial/debts)
   createDebtSchema,
   type CreateDebtInput,

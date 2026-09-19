@@ -1,5 +1,8 @@
 import app from './app';
 import { env } from './config/env';
+import { startNotificationDispatcher } from './modules/financial/application/notificationDeliveryService';
+
+const stopNotificationDispatcher = startNotificationDispatcher();
 
 const server = app.listen(env.PORT, () => {
   console.log('=======================================================');
@@ -10,10 +13,14 @@ const server = app.listen(env.PORT, () => {
   console.log('=======================================================');
 });
 
-process.on('SIGINT', () => {
+function shutdown() {
+  stopNotificationDispatcher();
   console.log('Encerrando o servidor Smart Campus Core API...');
   server.close(() => {
     console.log('Servidor desligado com sucesso.');
     process.exit(0);
   });
-});
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

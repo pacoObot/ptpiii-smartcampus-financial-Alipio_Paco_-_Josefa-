@@ -157,3 +157,9 @@ export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
 export type CreateAnalysisRequestInput = z.infer<typeof createAnalysisRequestSchema>;
 export type ResolveAnalysisRequestInput = z.infer<typeof resolveAnalysisRequestSchema>;
 export type UpdateFinancialPolicyInput = z.infer<typeof updateFinancialPolicySchema>;
+
+// Consulta/reenvio de um aviso existente; nao permite destinatarios ou URLs arbitrarios.
+export const financialNotificationIdSchema = z.object({
+  notificationId: z.string().trim().min(1).max(200),
+});
+export const retryFinancialNotificationSchema = z.object({}).strict();

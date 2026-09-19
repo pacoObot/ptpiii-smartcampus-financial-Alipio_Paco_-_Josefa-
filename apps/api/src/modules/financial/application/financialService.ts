@@ -2,6 +2,7 @@
 // Camada de aplicacao: casos de uso do modulo financeiro
 
 import { Prisma } from '@prisma/client';
+import { dispatchNotificationSafely } from './notificationDeliveryService';
 import { CreateDebtInput, CreatePaymentInput, CreateAnalysisRequestInput, ResolveAnalysisRequestInput, UpdateFinancialPolicyInput } from '@smart-campus/validation';
 import {
   generateCode,
@@ -44,13 +45,6 @@ async function auditFinancial(command: FinancialAuditCommand): Promise<void> {
       correlationId: command.correlationId,
       payload: (command.payload ?? {}) as Prisma.InputJsonValue,
     },
-  });
-}
-
-// Funcao auxiliar: cria uma notificacao interna para o estudante (INV-8)
-async function createNotification(tx: Prisma.TransactionClient, studentId: string, title: string, message: string) {
-  await tx.financialNotification.create({
-    data: { studentId, title, message },
   });
 }
 
@@ -105,7 +99,7 @@ export async function createDebt(input: CreateDebtInput, actorId: string, correl
   const dueDate = new Date(input.dueDate);
   const initialStatus = dueDate < new Date() ? 'VENCIDA' : 'PENDENTE';
 
-  const debt = await prisma.$transaction(async (tx) => {
+  const { debt, notificationId } = await prisma.$transaction(async (tx) => {
     const created = await tx.debt.create({
       data: {
         code,
@@ -123,15 +117,17 @@ export async function createDebt(input: CreateDebtInput, actorId: string, correl
     await recalcularEstado(tx, input.studentId);
 
     // INV-8: notificar o estudante
-    await createNotification(
-      tx,
-      input.studentId,
-      'Nova Divida Registada',
-      `Foi emitida uma nova divida "${input.title}" no valor de ${input.amount} MZN, com vencimento em ${dueDate.toLocaleDateString('pt-PT')}.`
-    );
+    const notification = await tx.financialNotification.create({ data: {
+      studentId: input.studentId,
+      title: 'Nova Divida Registada',
+      message: `Foi emitida uma nova divida "${input.title}" no valor de ${input.amount} MZN, com vencimento em ${dueDate.toLocaleDateString('pt-PT')}.`,
+      eventType: 'DEBT_CREATED', resourceId: created.id, correlationId,
+    } });
 
-    return created;
+    return { debt: created, notificationId: notification.id };
   });
+
+  await dispatchNotificationSafely(notificationId);
 
   // INV-4: registar auditoria
   await auditFinancial({
@@ -223,16 +219,19 @@ export async function createPayment(input: CreatePaymentInput, actorId: string, 
     const novoEstado = await recalcularEstado(tx, debt.studentId);
 
     // INV-8: Notificar o estudante sobre o pagamento
-    await tx.financialNotification.create({
+    const notification = await tx.financialNotification.create({
       data: {
+        eventType: 'PAYMENT_CONFIRMED', resourceId: payment.id, correlationId,
         studentId: debt.studentId,
         title: 'Pagamento Confirmado',
         message: `O seu pagamento de ${input.amountPaid} MZN para a divida "${debt.title}" foi confirmado. Estado financeiro: ${novoEstado}.`,
       },
     });
 
-    return { payment, novoEstado };
+    return { payment, novoEstado, notificationId: notification.id };
   });
+
+  await dispatchNotificationSafely(resultado.notificationId);
 
   // INV-4: Auditoria (fora da transaccao — nao e critica para a consistencia)
   await auditFinancial({
@@ -416,16 +415,19 @@ export async function resolveAnalysisRequest(id: string, input: ResolveAnalysisR
     }
 
     // INV-8: Notificar o estudante
-    await tx.financialNotification.create({
+    const notification = await tx.financialNotification.create({
       data: {
+        eventType: 'ANALYSIS_REQUEST_RESOLVED', resourceId: ar.id, correlationId,
         studentId: ar.studentId,
         title: 'Decisao da sua Contestacao',
         message: `O seu pedido de analise ${ar.code} foi julgado ${input.decision}. ${input.resolutionNotes}`,
       },
     });
 
-    return updated;
+    return { updated, notificationId: notification.id };
   });
+
+  await dispatchNotificationSafely(resultado.notificationId);
 
   await auditFinancial({
     action: 'ANALYSIS_REQUEST_RESOLVED',
@@ -435,7 +437,7 @@ export async function resolveAnalysisRequest(id: string, input: ResolveAnalysisR
     payload: { decision: input.decision, debtId: ar.debtId },
   });
 
-  return toAnalysisRequestDto(resultado);
+  return toAnalysisRequestDto(resultado.updated);
 }
 
 // =============================================================================

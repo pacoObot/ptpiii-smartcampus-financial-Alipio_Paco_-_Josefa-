@@ -16,6 +16,7 @@ import {
   FinancialHistoryDto,
   AnalysisRequestDto,
   FinancialNotificationDto,
+  FinancialNotificationDeliveryDto,
   FinancialPolicyDto,
 } from '@smart-campus/shared-types';
 
@@ -214,6 +215,16 @@ export class SmartCampusApiClient {
    * Consulta as notificacoes financeiras do estudante (ultimas 30).
    * GET /api/v1/financial/students/:studentId/notifications
    */
+  public async getFinancialNotificationDelivery(id: string): Promise<FinancialNotificationDeliveryDto> {
+    return this.request<FinancialNotificationDeliveryDto>(`/financial/notifications/${encodeURIComponent(id)}/delivery`);
+  }
+
+  public async retryFinancialNotification(id: string): Promise<FinancialNotificationDeliveryDto> {
+    return this.request<FinancialNotificationDeliveryDto>(`/financial/notifications/${encodeURIComponent(id)}/retry`, {
+      method: 'POST', body: JSON.stringify({}),
+    });
+  }
+
   public async getStudentFinancialNotifications(studentId: string): Promise<FinancialNotificationDto[]> {
     return this.request<FinancialNotificationDto[]>(`/financial/students/${studentId}/notifications`);
   }

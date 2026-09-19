@@ -310,7 +310,15 @@ model AnalysisRequest {
   @@map("analysis_requests")
 }
 
-// Notificacao financeira: alerta interno emitido automaticamente para o estudante
+enum NotificationDeliveryStatus {
+  LOCAL_ONLY
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+// Aviso financeiro e registo persistente de envio para a API externa de notificacoes.
 model FinancialNotification {
   id        String   @id @default(cuid())
   studentId String
@@ -319,9 +327,23 @@ model FinancialNotification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  eventType              String                     @default("FINANCIAL_NOTICE")
+  resourceId             String?
+  correlationId          String?
+  deliveryStatus         NotificationDeliveryStatus @default(PENDING)
+  externalNotificationId String?                    @unique
+  attempts               Int                        @default(0)
+  nextAttemptAt          DateTime                   @default(now())
+  lastAttemptAt          DateTime?
+  sentAt                 DateTime?
+  lastError              String?
+  lockedUntil            DateTime?
+  lockToken              String?
+
   student User @relation("FinancialNotificationStudent", fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([studentId, read])
+  @@index([deliveryStatus, nextAttemptAt])
   @@map("financial_notifications")
 }
 

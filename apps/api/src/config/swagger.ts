@@ -107,6 +107,36 @@ export const swaggerDocument = {
     },
   },
   paths: {
+    '/api/v1/financial/notifications/{notificationId}/delivery': {
+      get: {
+        tags: ['Notificações (Notifications)'],
+        summary: 'Consultar estado de envio para a API externa (FINANCE/ADMIN)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'notificationId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'Envelope data: id, deliveryStatus, externalNotificationId, attempts, lastAttemptAt, nextAttemptAt, sentAt, lastError. SENT significa aceite pela API externa.' },
+          '401': { description: 'Nao autenticado' }, '403': { description: 'Sem permissao' },
+          '404': { description: 'Notificacao inexistente' },
+        },
+      },
+    },
+    '/api/v1/financial/notifications/{notificationId}/retry': {
+      post: {
+        tags: ['Notificações (Notifications)'],
+        summary: 'Repetir envio de aviso pendente ou falhado (FINANCE/ADMIN)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'notificationId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: false, content: { 'application/json': { schema: { type: 'object', additionalProperties: false }, example: {} } } },
+        responses: {
+          '200': { description: 'Envio confirmado ou aviso historico LOCAL_ONLY; avisos SENT nao sao reenviados' },
+          '202': { description: 'Envio pendente, em processamento ou falhado; consultar data.deliveryStatus' },
+          '400': { description: 'Corpo invalido' }, '401': { description: 'Nao autenticado' },
+          '403': { description: 'Sem permissao' }, '404': { description: 'Notificacao inexistente' },
+          '503': { description: 'NOTIFICATIONS_NOT_CONFIGURED: URL ou token em falta/invalido' },
+        },
+      },
+    },
+
     '/health': {
       get: {
         summary: 'Verificação de Saúde da API',

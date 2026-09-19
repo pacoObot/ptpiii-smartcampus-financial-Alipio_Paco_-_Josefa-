@@ -4,6 +4,8 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import {
+  financialNotificationIdSchema,
+  retryFinancialNotificationSchema,
   createDebtSchema,
   createPaymentSchema,
   createAnalysisRequestSchema,
@@ -14,7 +16,25 @@ import { authenticate, authorize } from '../../../middlewares/auth';
 import { sendSuccess, sendError } from '../../../utils/response';
 import * as financialService from '../application/financialService';
 
+import { getNotificationDelivery, retryNotification } from '../application/notificationDeliveryService';
+
 const router = Router();
+
+router.get('/notifications/:notificationId/delivery', authenticate, authorize(['FINANCE', 'ADMIN']), async (req, res, next) => {
+  try {
+    const { notificationId } = financialNotificationIdSchema.parse(req.params);
+    sendSuccess(res, await getNotificationDelivery(notificationId));
+  } catch (error) { next(error); }
+});
+
+router.post('/notifications/:notificationId/retry', authenticate, authorize(['FINANCE', 'ADMIN']), async (req, res, next) => {
+  try {
+    const { notificationId } = financialNotificationIdSchema.parse(req.params);
+    retryFinancialNotificationSchema.parse(req.body ?? {});
+    const result = await retryNotification(notificationId, req.user!.id, req.correlationId!);
+    sendSuccess(res, result, result.deliveryStatus === 'SENT' || result.deliveryStatus === 'LOCAL_ONLY' ? 200 : 202);
+  } catch (error) { next(error); }
+});
 
 // =============================================================================
 // DEBTS — Dividas

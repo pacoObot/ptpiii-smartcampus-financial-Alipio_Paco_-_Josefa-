@@ -287,3 +287,27 @@ export interface FinancialHistoryDto {
   totalPaid: number;
   totalOutstanding: number;
 }
+
+// Contrato proposto de envio para a API externa de Notificacoes.
+export interface FinancialNotificationEvent {
+  sourceModule: 'financial';
+  sourceEventId: string;
+  recipientUserId: string;
+  eventType: string;
+  resourceId: string | null;
+  title: string;
+  message: string;
+  channel: 'IN_APP';
+  occurredAt: string;
+}
+
+export interface FinancialNotificationDeliveryDto {
+  id: string;
+  deliveryStatus: 'LOCAL_ONLY' | 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED';
+  externalNotificationId: string | null;
+  attempts: number;
+  lastAttemptAt: string | null;
+  nextAttemptAt: string | null;
+  sentAt: string | null;
+  lastError: string | null;
+}
