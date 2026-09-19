@@ -180,6 +180,32 @@ describe('Modulo Financeiro — Exercicio 6: Erros e Consistencia', () => {
   // Exercicio 6: cobrir cenario de 404
   // =========================================================================
   describe('404 — Recurso nao encontrado', () => {
+    it('POST /debts com estudante inexistente retorna 404 sem criar divida', async () => {
+      const studentId = 'test-missing-financial-user';
+      const response = await request(app)
+        .post('/api/v1/financial/debts')
+        .set('Authorization', ADMIN_TOKEN)
+        .send({ studentId, title: 'Teste FK', amount: 100, origin: 'TEST_SUITE', dueDate: '2027-01-01T00:00:00.000Z' });
+      expect(response.status).toBe(404);
+      expect(response.body.code).toBe('STUDENT_NOT_FOUND');
+      expect(await prisma.debt.count({ where: { studentId } })).toBe(0);
+    });
+
+    it('BD rejeita divida com estudante inexistente mesmo sem passar pela API', async () => {
+      await expect(prisma.debt.create({ data: {
+        code: 'TEST-FK-MISSING-USER', studentId: 'test-missing-financial-user',
+        title: 'Teste FK', amount: 100, origin: 'TEST_SUITE', dueDate: new Date('2027-01-01'),
+      } })).rejects.toMatchObject({ code: 'P2003' });
+    });
+
+    it('BD rejeita responsavel de resolucao inexistente', async () => {
+      await expect(prisma.analysisRequest.create({ data: {
+        code: 'TEST-FK-MISSING-RESOLVER', debtId: 'test_debt_overdue',
+        studentId: 'usr_student_01', reason: 'Teste FK',
+        slaDueDate: new Date('2027-01-01'), resolvedById: 'test-missing-financial-user',
+      } })).rejects.toMatchObject({ code: 'P2003' });
+    });
+
     it('GET /api/v1/financial/debts/:id com ID inexistente deve retornar 404', async () => {
       const response = await request(app)
         .get('/api/v1/financial/debts/id-que-nao-existe-99999')

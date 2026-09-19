@@ -94,6 +94,13 @@ export async function listDebts(studentId?: string) {
 // Exercicio 3: CRUD create com validacao Zod
 // Exercicio 7: code e UNIQUE — Prisma rejeita duplicados
 export async function createDebt(input: CreateDebtInput, actorId: string, correlationId: string) {
+  const student = await prisma.user.findUnique({ where: { id: input.studentId }, select: { id: true } });
+  if (!student) {
+    throw Object.assign(new Error('Estudante nao encontrado'), {
+      statusCode: 404, code: 'STUDENT_NOT_FOUND',
+    });
+  }
+
   const code = generateCode('DB');
   const dueDate = new Date(input.dueDate);
   const initialStatus = dueDate < new Date() ? 'VENCIDA' : 'PENDENTE';

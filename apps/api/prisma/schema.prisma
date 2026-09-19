@@ -83,6 +83,14 @@ model User {
   maintenanceNotes    MaintenanceNote[]
   auditEvents         AuditEvent[]
 
+  financialDebts         Debt[]                  @relation("DebtStudent")
+  financialPayments      Payment[]               @relation("PaymentStudent")
+  confirmedPayments      Payment[]               @relation("PaymentConfirmer")
+  financialStatus        FinancialStatus?         @relation("FinancialStatusStudent")
+  analysisRequests       AnalysisRequest[]       @relation("AnalysisRequestStudent")
+  resolvedAnalysisRequests AnalysisRequest[]     @relation("AnalysisRequestResolver")
+  financialNotifications FinancialNotification[] @relation("FinancialNotificationStudent")
+
   @@map("users")
 }
 
@@ -233,6 +241,8 @@ model Debt {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
+  student User @relation("DebtStudent", fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
   @@index([studentId, status])
   @@index([dueDate])
   @@map("debts")
@@ -252,6 +262,9 @@ model Payment {
   debt          Debt          @relation(fields: [debtId], references: [id])
   createdAt     DateTime      @default(now())
 
+  student User @relation("PaymentStudent", fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  confirmedBy User @relation("PaymentConfirmer", fields: [confirmedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
   @@index([studentId])
   @@index([debtId])
   @@index([referenceCode])
@@ -266,6 +279,8 @@ model FinancialStatus {
   blockedAt DateTime?
   reason    String?
   updatedAt DateTime            @updatedAt
+
+  student User @relation("FinancialStatusStudent", fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([studentId, status])
   @@map("financial_status")
@@ -287,6 +302,9 @@ model AnalysisRequest {
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
 
+  student User @relation("AnalysisRequestStudent", fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  resolvedBy User? @relation("AnalysisRequestResolver", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
   @@index([studentId, status])
   @@index([debtId])
   @@map("analysis_requests")
@@ -300,6 +318,8 @@ model FinancialNotification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  student User @relation("FinancialNotificationStudent", fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([studentId, read])
   @@map("financial_notifications")
