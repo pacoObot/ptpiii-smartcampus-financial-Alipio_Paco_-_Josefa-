@@ -251,6 +251,7 @@ Os testes utilizam Jest, Supertest e PostgreSQL e criam ou alteram dados. Os tes
 |---|---|
 | [Contratos de integração](docs/contratos-financial.md) | Referência central dos contratos C1 a C5 |
 | [Especificação financeira](docs/especificacao-modulo-gestao-financeira.md) | Requisitos, regras e responsabilidades do módulo |
+| [Role FINANCE](docs/role-finance.md) | Funções, permissões actuais e propostas de implementação para a tesouraria |
 | [Modelo de dados](docs/exercicio-1/atributos-e-relacoes.md) | Entidades, atributos e relações |
 | [Integração académica](docs/integracao-modulos-academicos.md) | Fluxos com Estudantes e Docentes, Avaliações e Horários |
 | [Integração de notificações](docs/integracao-notificacoes.md) | Envio, idempotência, configuração e recuperação de falhas |
