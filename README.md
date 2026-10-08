@@ -264,3 +264,9 @@ Os testes utilizam Jest, Supertest e PostgreSQL e criam ou alteram dados. Os tes
 Universidade Joaquim Alberto Chissano · Prática Técnico-Profissional III · 2026.
 
 Docente: Msc. Armando Correia.
+
+## Actividade da Semana 6
+
+[Passo a passo e matriz RBAC](docs/exercicios/documentacao-exercicios-semana6.md) · [Resultados dos testes, cobertura e capturas Swagger](docs/exercicios/semana6/resultados.md).
+
+Esta publicação contém evidências da execução local: **109 testes aprovados**, quatro cenários Swagger e duas provas anti-BOLA. O código local testado inclui alterações de segurança ainda não publicadas; estes resultados não são uma execução de CI nem validam o código deste commit. Consulte o âmbito e as instruções no relatório.

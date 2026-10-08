@@ -1,0 +1,59 @@
+{
+  "executedAt": "2026-10-06T05:56:01.957Z",
+  "method": "Swagger UI Try it out, API e PostgreSQL reais descartáveis",
+  "results": [
+    {
+      "status": 200,
+      "role": "FINANCE",
+      "body": {
+        "data": {
+          "id": "cmuw9m9hn0004b1yfmmps59xm",
+          "code": "swagger-7406ee86-6a00-460b-a753-e19847f87a16",
+          "studentId": "swagger-7406ee86-6a00-460b-a753-e19847f87a16-STUDENT",
+          "title": "Propina Semana 6",
+          "amount": 3500,
+          "origin": "SEMANA6",
+          "dueDate": "2099-10-31T00:00:00.000Z",
+          "status": "PENDENTE",
+          "createdAt": "2026-10-06T05:55:53.099Z",
+          "updatedAt": "2026-10-06T05:55:53.099Z"
+        },
+        "meta": {
+          "correlationId": "22f9aa87-ee74-4fbb-9a7b-f85fe594e1aa",
+          "timestamp": "2026-10-06T05:55:58.186Z"
+        }
+      },
+      "screenshot": "swagger-200.png"
+    },
+    {
+      "status": 401,
+      "role": null,
+      "body": {
+        "code": "UNAUTHORIZED",
+        "message": "Token de acesso ou sessao invalida.",
+        "correlationId": "5a26c37f-e01b-44d3-bc87-9e54000b8397"
+      },
+      "screenshot": "swagger-401.png"
+    },
+    {
+      "status": 403,
+      "role": "TEACHER",
+      "body": {
+        "code": "FORBIDDEN",
+        "message": "Perfil sem permissao para esta operacao.",
+        "correlationId": "3048255a-a2b9-465a-a421-48973ba4bd03"
+      },
+      "screenshot": "swagger-403.png"
+    },
+    {
+      "status": 404,
+      "role": "FINANCE",
+      "body": {
+        "code": "DEBT_NOT_FOUND",
+        "message": "Divida nao encontrada.",
+        "correlationId": "a0e84528-8887-4339-8482-b050689382b8"
+      },
+      "screenshot": "swagger-404.png"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "startedAt": "2026-10-06T06:03:56.607Z",
+  "finishedAt": "2026-10-06T06:04:49.970Z",
+  "sourceSha256": "aeb382def4b51f3e9c739bed0f5660cb84b6a2b8f02847a0a2a21e26a1df7b8e",
+  "node": "v24.19.0",
+  "database": "PostgreSQL 15 descartavel, migracoes desde zero",
+  "success": true,
+  "suites": 5,
+  "passed": 109,
+  "failed": 0,
+  "tests": [
+    {
+      "file": "apps/api/src/modules/financial/tests/financial-security.test.ts",
+      "status": "passed",
+      "count": 29
+    },
+    {
+      "file": "apps/api/src/modules/financial/tests/financial-semana6.test.ts",
+      "status": "passed",
+      "count": 20
+    },
+    {
+      "file": "apps/api/src/modules/financial/tests/financial.test.ts",
+      "status": "passed",
+      "count": 22
+    },
+    {
+      "file": "apps/api/src/modules/financial/tests/financial-notification-delivery.test.ts",
+      "status": "passed",
+      "count": 14
+    },
+    {
+      "file": "apps/api/src/tests/security.unit.test.ts",
+      "status": "passed",
+      "count": 24
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "executedAt": "2026-10-06T05:55:49.557Z",
+  "results": [
+    {
+      "mutation": "leitura",
+      "guard": "if (req.user!.role === 'STUDENT' && req.user!.id !== debt.studentId)",
+      "test": "A não lê dados de B: detail",
+      "detected": true,
+      "sourceRestored": true,
+      "failure": [
+        "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 200\n    at expectError (/home/paco/Documents/UJAC- 4 ano/PTP - III/SMART CAMPUS/apps/api/src/modules/financial/tests/financial-semana6.test.ts:36:22)\n    at /home/paco/Documents/UJAC- 4 ano/PTP - III/SMART CAMPUS/apps/api/src/modules/financial/tests/financial-semana6.test.ts:95:5\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      ]
+    },
+    {
+      "mutation": "escrita",
+      "guard": "if (debt.studentId !== studentId)",
+      "test": "A não contesta dívida de B e a escrita não ocorre",
+      "detected": true,
+      "sourceRestored": true,
+      "failure": [
+        "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 201\n    at expectError (/home/paco/Documents/UJAC- 4 ano/PTP - III/SMART CAMPUS/apps/api/src/modules/financial/tests/financial-semana6.test.ts:36:22)\n    at Object.<anonymous> (/home/paco/Documents/UJAC- 4 ano/PTP - III/SMART CAMPUS/apps/api/src/modules/financial/tests/financial-semana6.test.ts:101:5)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      ]
+    }
+  ]
+}
