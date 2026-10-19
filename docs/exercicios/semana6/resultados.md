@@ -72,10 +72,4 @@ As duas guardas foram restauradas exactamente ao conteúdo original. [Resumo da 
 
 A ficha está documentada no [relatório passo a passo](../documentacao-exercicios-semana6.md). Os nomes do grupo foram recolhidos da configuração existente e devem ser conferidos antes de entregar.
 
-## Conteúdo publicado e limites
 
-Esta entrega inclui o relatório da actividade, resultados Jest, cobertura, prova de mutação e quatro capturas Swagger. O [OpenAPI validado](evidencias/openapi-validado.yaml) é uma fotografia da especificação local testada; não altera a especificação servida pela versão de código publicada.
-
-Os ficheiros HTML de cobertura contêm o código instrumentado da execução local e devem ser lidos como evidência dessa execução. No GitHub, a tabela Markdown acima permite consultar os números; para explorar o HTML, descarregar a pasta de cobertura e abrir `lcov-report/index.html`.
-
-Ficaram fora deste push as alterações de autenticação, sessões, migrações, serviços, dependências npm, scripts e testes executáveis ainda misturadas com trabalho anterior. A publicação dessas alterações requer uma entrega de código com âmbito e validação próprios.
