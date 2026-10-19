@@ -136,4 +136,3 @@ Nesta revisão, as quatro migrações foram aplicadas com sucesso numa instânci
 - [Integração com módulos académicos](integracao-modulos-academicos.md)
 - [Exercícios da Semana 5](exercicios/documentacao-exercicios-semana5.md)
 - [Arquitectura do Core](core/arquitectura-smart-campus.md)
-- [Organização e publicação](organizacao-e-publicacao.md)

@@ -1207,7 +1207,7 @@ O login devolve um `accessToken` e um `refreshToken`. O `accessToken` expira ao 
 export API=http://localhost:4100/api/v1
 export TOKEN=$(curl -s $API/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"tesouraria@smartcampus.demo","password":"Finance123!"}' \
+  -d "{\"email\":\"$FINANCE_EMAIL\",\"password\":\"$FINANCE_PASSWORD\"}" \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['tokens']['accessToken'])")
 export AUTH="Authorization: Bearer $TOKEN"
 ```
@@ -1756,7 +1756,7 @@ test('status exige autenticação', async () => {
 });
 
 test('STUDENT não pode criar dívida', async () => {
-  const token = await login('estudante@smartcampus.demo', 'Estudante123!');
+  const token = await login(process.env.STUDENT_TEST_EMAIL!, process.env.STUDENT_TEST_PASSWORD!);
   const r = await request(app)
     .post('/api/v1/financial/debts')
     .set('Authorization', `Bearer ${token}`)
@@ -1765,7 +1765,7 @@ test('STUDENT não pode criar dívida', async () => {
 });
 
 test('FINANCE cria dívida e estudante fica BLOCKED', async () => {
-  const token = await login('tesouraria@smartcampus.demo', 'Finance123!');
+  const token = await login(process.env.FINANCE_TEST_EMAIL!, process.env.FINANCE_TEST_PASSWORD!);
   const r = await request(app)
     .post('/api/v1/financial/debts')
     .set('Authorization', `Bearer ${token}`)
@@ -1776,7 +1776,7 @@ test('FINANCE cria dívida e estudante fica BLOCKED', async () => {
 });
 
 test('Contestação não altera estado financeiro (INV-7)', async () => {
-  const token = await login('estudante@smartcampus.demo', 'Estudante123!');
+  const token = await login(process.env.STUDENT_TEST_EMAIL!, process.env.STUDENT_TEST_PASSWORD!);
   const r = await request(app)
     .post('/api/v1/financial/analysis-requests')
     .set('Authorization', `Bearer ${token}`)

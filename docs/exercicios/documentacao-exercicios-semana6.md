@@ -103,7 +103,7 @@ npm run dev:api
 8. Voltar ao token FINANCE e usar `semana6-divida-inexistente`: esperar 404.
 9. Guardar capturas do bloco de resposta com estado e JSON, sem expor tokens.
 
-O seed de desenvolvimento define `financas@ujac.ac.mz`, `docente@ujac.ac.mz`, `alipio.paco@estudante.ujac.ac.mz` e `josefa.muthemba@estudante.ujac.ac.mz`, com palavra-passe de demonstração `123456`. Contas existentes podem ter sido alteradas: consultar o seed e o estado local. Não é necessário resementar a base habitual para os testes automatizados.
+Use contas temporárias criadas no ambiente de teste e obtenha as respectivas credenciais por um canal seguro. Não inclua e-mails, palavras-passe ou tokens de demonstração na documentação. Não é necessário resementar a base habitual para os testes automatizados.
 
 O script `scripts/semana6-swagger.cjs` reproduz os quatro cenários no Chrome através do Swagger UI, com login HTTP real, contas temporárias e base descartável. A automação configura o estado Authorize com a API do Swagger e acciona **Try it out/Execute**. A instância temporária usa uma porta livre e ajusta apenas o servidor do seu documento em memória.
 
@@ -123,7 +123,7 @@ Para incluir as capturas automatizadas, indicar uma instalação disponível de 
 PLAYWRIGHT_MODULE=/caminho/para/playwright CHROME_PATH=/usr/bin/google-chrome npm run test:semana6:isolated
 ```
 
-Sem `PLAYWRIGHT_MODULE`, o runner executa os testes e a cobertura; não afirma ter repetido a exploração visual. Nesta máquina foi utilizada a instalação existente em `/home/paco/.cache/ms-playwright-go/1.57.0/package`.
+Sem `PLAYWRIGHT_MODULE`, o runner executa os testes e a cobertura; não afirma ter repetido a exploração visual. Indique explicitamente o caminho da instalação de Playwright disponível no seu ambiente.
 
 Com uma base **exclusivamente de testes** já preparada, cujo nome termine em `_test`, também se pode executar:
 

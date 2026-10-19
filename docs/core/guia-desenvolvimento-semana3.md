@@ -93,8 +93,9 @@ Nesta terceira semana de aulas, os objectivos práticos são:
    ```bash
    curl -X POST http://localhost:4100/api/v1/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "admin@ujac.ac.mz", "password": "password123"}'
+     -d '{"email": "<email-local>", "password": "<palavra-passe-local>"}'
    ```
+   Use uma conta criada no seu ambiente local; não registe credenciais no documento nem no controlo de versão.
 
 2. **Consultar Salas (Usando o Token obtido):**
    ```bash
